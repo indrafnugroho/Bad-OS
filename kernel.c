@@ -1,7 +1,7 @@
 /* Ini deklarasi fungsi */
 void handleInterrupt21 (int AX, int BX, int CX, int DX);
 void printString(char *string); //done
-void readString(char *string);
+void readString(char *string); //done
 void readSector(char *buffer, int sector); //done
 void writeSector(char *buffer, int sector); //done
 void readFile(char *buffer, char *filename, int *success);
