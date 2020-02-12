@@ -14,8 +14,12 @@ int mod(int x, int y);
 int div(int a,int b);
 
 int main() {
+	char* abc;
+
 	makeInterrupt21();
 	printString("Testestestes");
+	readString(abc);
+	printString(abc);
 	while (1);
 }
 
@@ -57,6 +61,24 @@ void printString(char *string) { //WORK!!!
 }
 
 void readString(char *string) {
+	int i = 0;
+	int idx = 0;
+	char input;
+	do {
+		input = interrupt(0x16, 0, 0, 0, 0);
+		if (input == '\r') {
+			string[idx] = '\0';
+			interrupt(0x10, 0xE00 + input, 0, 0, 0);
+		} else if (input != '\b') {
+			interrupt(0x10, 0xE00 + input, 0, 0, 0);
+			string[idx] = input;
+			idx++;
+		} else if (idx > 0) {
+			idx--;
+			interrupt(0x10, 0xE00+ '\b', 0, 0, 0);
+		}
+	} while (input != '\r');
+	interrupt(0x10, 0xE00 + '\r', 0, 0, 0);
 
 }
 
