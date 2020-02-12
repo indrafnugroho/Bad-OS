@@ -1,17 +1,17 @@
 /* Ini deklarasi fungsi */
 void handleInterrupt21 (int AX, int BX, int CX, int DX);
-void printString(char *string);
+void printString(char *string); //done
 void readString(char *string);
-void readSector(char *buffer, int sector);
-void writeSector(char *buffer, int sector);
+void readSector(char *buffer, int sector); //done
+void writeSector(char *buffer, int sector); //done
 void readFile(char *buffer, char *filename, int *success);
-void clear(char *buffer, int length); //Fungsi untuk mengisi buffer dengan 0
+void clear(char *buffer, int length); //Fungsi untuk mengisi buffer dengan 0 (done)
 void writeFile(char *buffer, char *filename, int *sectors);
 void executeProgram(char *filename, int segment, int *success);
 
 //Fungsi Matematika
-int mod(int x, int y);
-int div(int a,int b);
+int mod(int x, int y); //done
+int div(int a,int b); //done
 
 int main() {
 	makeInterrupt21();
