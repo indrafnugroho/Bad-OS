@@ -9,6 +9,10 @@ void clear(char *buffer, int length); //Fungsi untuk mengisi buffer dengan 0
 void writeFile(char *buffer, char *filename, int *sectors);
 void executeProgram(char *filename, int segment, int *success);
 
+//Fungsi Matematika
+int mod(int x, int y);
+int div(int a,int b);
+
 int main() {
 	makeInterrupt21();
 	printString("Testestestes");
@@ -57,11 +61,11 @@ void readString(char *string) {
 }
 
 void readSector(char *buffer, int sector) {
-
+	interrupt(0x13, 0x201, buffer, div(sector, 36) * 0x100 + mod(sector, 18) + 1, mod(div(sector, 18), 2) * 0x100);
 }
 
 void writeSector(char *buffer, int sector) {
-
+	interrupt(0x13, 0x301, buffer, div(sector, 36) * 0x100 + mod(sector, 18) + 1, mod(div(sector, 18), 2) * 0x100);
 }
 
 void readFile(char *buffer, char *filename, int *success) {
@@ -79,3 +83,18 @@ void writeFile(char *buffer, char *filename, int *sectors) {
 void executeProgram(char *filename, int segment, int *success) {
 
 }
+
+//Implemmentasi Fungsi Matematika 
+int mod(int x, int y) { 
+    while (x>=y) {
+        x-=y;
+    }return x;
+}
+
+int div (int x, int y) {
+	int ratio = 0;
+	while(ratio*y <= x) {
+		ratio += 1;
+	}return(ratio-1);
+}
+
