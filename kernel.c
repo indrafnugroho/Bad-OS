@@ -73,7 +73,10 @@ void readFile(char *buffer, char *filename, int *success) {
 }
 
 void clear(char *buffer, int length) { //Fungsi untuk mengisi buffer dengan 0
-
+	int i;
+	for(i = 0; i < length; ++i){
+		buffer[i] = 0;
+	}
 } 
 
 void writeFile(char *buffer, char *filename, int *sectors) {
