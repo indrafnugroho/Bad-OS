@@ -112,7 +112,7 @@ void writeFile(char *buffer, char *filename, int *sectors) {
 void executeProgram(char *filename, int segment, int *success) {
 	char *buffer = malloc(MAX_SECTORS * SECTOR_SIZE);
 	readFile(*buffer, *filename, *success);
-	for (int i=0; i<buffer; i++) {
+	for (int i=0; i<MAX_SECTORS * SECTOR_SIZE; i++) {
 		putInMemory(segment, i, buffer[i])
 	}
 	launchProgram(segment);
