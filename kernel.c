@@ -1,3 +1,6 @@
+#define MAX_SECTORS 32
+#define SECTOR_SIZE 512
+
 /* Ini deklarasi fungsi */
 void handleInterrupt21 (int AX, int BX, int CX, int DX);
 void printString(char *string); //done
@@ -13,6 +16,7 @@ void executeProgram(char *filename, int segment, int *success);
 int mod(int x, int y); //done
 int div(int a,int b); //done
 
+//Main Function
 int main() {
 	char* abc;
 
@@ -106,7 +110,12 @@ void writeFile(char *buffer, char *filename, int *sectors) {
 }
 
 void executeProgram(char *filename, int segment, int *success) {
-
+	char *buffer = malloc(MAX_SECTORS * SECTOR_SIZE);
+	readFile(*buffer, *filename, *success);
+	for (int i=0; i<buffer; i++) {
+		putInMemory(segment, i, buffer[i])
+	}
+	launchProgram(segment);
 }
 
 //Implementasi Fungsi Matematika 
