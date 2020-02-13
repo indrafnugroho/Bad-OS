@@ -1,5 +1,3 @@
-#include <string.h>
-#include <stdlib.h>
 
 #define MAX_BYTE 256
 #define SECTOR_SIZE 512
@@ -116,17 +114,23 @@ void readFile(char *buffer, char *filename, int *success) {
 	int fileFound;
 	int i;
 	int j;
+	int ij;
 	readSector(dir, DIR_SECTOR);
 	for (i = 0; i < SECTOR_SIZE; i+=DIR_ENTRY_LENGTH) {
-		fileFound = strCmp(dir + i, filename);
-		if (fileFound == 0) {
+		fileFound = 1;
+		for (ij = 0; ij < MAX_FILENAME; ij++) {
+			if (dir[i + ij] != filename[ij]) {
+				fileFound = 0;
+			}
+		}
+		if (fileFound == 1) {
 			for (j = 0; j < DIR_ENTRY_LENGTH; j++) {
 				entry[j] = dir[i+j];
 			}
 			break;
 		}
 	}
-	if (fileFound != 0) {
+	if (fileFound == 0) {
 		*success = 0;
 		return;
 	} else {
@@ -137,6 +141,7 @@ void readFile(char *buffer, char *filename, int *success) {
 			k++;
 		}
 		*success = 1;
+		return;
 	}
 
 }
