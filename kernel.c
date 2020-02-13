@@ -213,13 +213,23 @@ void writeFile(char *buffer, char *filename, int *sectors) {
 }
 
 void executeProgram(char *filename, int segment, int *success) {
-	char *buffer = malloc(MAX_SECTORS * SECTOR_SIZE);
+	char buffer[MAX_SECTORS * SECTOR_SIZE];
 	int i;
 	readFile(*buffer, *filename, *success);
 	for (i=0; i<MAX_SECTORS * SECTOR_SIZE; i++) {
 		putInMemory(segment, i, buffer[i]);
 	}
 	launchProgram(segment);
+}
+
+void printStringLogo(int r, int line, int color, int background, char* logo){
+   int i=0;
+   int eq=0x8000+((r-1)*80*2)+(40-line/2)*2;
+   while(logo[i]!='\0'){
+      putInMemory(0xB000, eq + i*2, logo[i]);
+      putInMemory(0xB000, eq + i*2+1, color + (background<<4));
+      i++;
+   }
 }
 
 //Implementasi Fungsi Matematika 
