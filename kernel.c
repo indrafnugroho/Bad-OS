@@ -32,12 +32,8 @@ int div(int a,int b); //done
 
 //Main Function
 int main() {
-	char* abc;
 
-	makeInterrupt21();
-	printString("Testestestes");
-	readString(abc);
-	printString(abc);
+	logoPrint(0x0F, 0x03);
 	while (1);
 }
 
@@ -222,7 +218,7 @@ void executeProgram(char *filename, int segment, int *success) {
 	launchProgram(segment);
 }
 
-void printStringLogo(int r, int line, int color, int background, char* logo){
+void printStringInCenter(int r, int line, int color, int background, char* logo){
    int i=0;
    int eq=0x8000+((r-1)*80*2)+(40-line/2)*2;
    while(logo[i]!='\0'){
@@ -232,7 +228,20 @@ void printStringLogo(int r, int line, int color, int background, char* logo){
    }
 }
 
+void logoPrint(int color, int bg) {
+
+
+printStringInCenter(7, 20, color, bg, "    =/\                 /\= ");
+printStringInCenter(8, 20, color, bg, "    / \'._   (\_/)   _.'/ \ ");
+printStringInCenter(9, 20, color, bg, "   / .''._'--(o.o)--'_.''. \ ");
+printStringInCenter(10, 20, color, bg, "  /.' _/ |`'=/ \" \='`| \_ `.\ ");
+printStringInCenter(11, 20, color, bg, " /` .' `\;-,'\___/',-;/` '. '\ ");
+printStringInCenter(12, 20, color, bg, "/.-'       `\(-V-)/`       `-.\ ");
+printStringInCenter(13, 20, color, bg, "`            \"  \"            ` ");
+}
+
 //Implementasi Fungsi Matematika 
+
 int mod(int x, int y) { 
     while (x>=y) {
         x-=y;
