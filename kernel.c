@@ -1,5 +1,21 @@
-#define MAX_SECTORS 32
+#include <string.h>
+#include <stdlib.h>
+
+#define MAX_BYTE 256
 #define SECTOR_SIZE 512
+#define MAX_FILES 16
+#define MAX_FILENAME 12
+#define MAX_SECTORS 20
+#define DIR_ENTRY_LENGTH 32
+#define MAP_SECTOR 1
+#define DIR_SECTOR 2
+#define TRUE 1
+#define FALSE 0
+#define INSUFFICIENT_SECTORS 0
+#define NOT_FOUND -1
+#define INSUFFICIENT_DIR_ENTRIES -1
+#define EMPTY 0x00
+#define USED 0xFF
 
 /* Ini deklarasi fungsi */
 void handleInterrupt21 (int AX, int BX, int CX, int DX);
@@ -96,29 +112,31 @@ void writeSector(char *buffer, int sector) {
 
 void readFile(char *buffer, char *filename, int *success) {
 	char dir[SECTOR_SIZE];
-	char entry[DIR_ENTRY_LENGTH]
+	char entry[DIR_ENTRY_LENGTH];
 	int fileFound;
+	int i;
+	int j;
 	readSector(dir, DIR_SECTOR);
-	for (int i = 0; i < SECTOR_SIZE; i += DIR_ENTRY_LENGTH) {
+	for (i = 0; i < SECTOR_SIZE; i+=DIR_ENTRY_LENGTH) {
 		fileFound = strCmp(dir + i, filename);
 		if (fileFound == 0) {
-			for (int j = 0; j < DIR_ENTRY_LENGTH; j++) {
+			for (j = 0; j < DIR_ENTRY_LENGTH; j++) {
 				entry[j] = dir[i+j];
 			}
 			break;
 		}
 	}
 	if (fileFound != 0) {
-		*result = 0;
+		*success = 0;
 		return;
 	} else {
-		k = 0;
-		search_byte = -999;
-		while (k < MAX_SECTORS) && (search_byte != 0) {
+		int k = 0;
+		int search_byte = -999;
+		while ((k < MAX_SECTORS) && (search_byte != 0)) {
 			readSector(buffer + k * SECTOR_SIZE, entry[k]);
 			k++;
 		}
-		*result = 1;
+		*success = 1;
 	}
 
 }
@@ -191,9 +209,10 @@ void writeFile(char *buffer, char *filename, int *sectors) {
 
 void executeProgram(char *filename, int segment, int *success) {
 	char *buffer = malloc(MAX_SECTORS * SECTOR_SIZE);
+	int i;
 	readFile(*buffer, *filename, *success);
-	for (int i=0; i<MAX_SECTORS * SECTOR_SIZE; i++) {
-		putInMemory(segment, i, buffer[i])
+	for (i=0; i<MAX_SECTORS * SECTOR_SIZE; i++) {
+		putInMemory(segment, i, buffer[i]);
 	}
 	launchProgram(segment);
 }
