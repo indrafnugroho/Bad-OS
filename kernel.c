@@ -32,8 +32,36 @@ int div(int a,int b); //done
 
 //Main Function
 int main() {
+	char buffer[512 * 20];
+	int suc;
+	printString("babibu\r\n");
+	makeInterrupt21();
+	// printLogo();
+	//Cari key.txt kalo udah ada
+	//Key.txt akan digenerate setelah manggil keyproc
+	//Jadi awalnya panggil keyproc dulu karena key.txt ga ada
+	//Lalu run lagi programnya, karena sudah ada key.txt, langsung keprint key nya
+	interrupt(0x21, 0x4, buffer, "key.txt", &suc);
+	printString("bibabu\r\n");
+	if (suc)
+	{
+		printString("tes anj\r\n");
+		interrupt(0x21,0x0, "Key : ", 0, 0);
+		printString("tes jir\r\n");
+	 	interrupt(0x21,0x0, buffer, 0, 0);
+		printString("tes ih\r\n");
+	}
+	else
+	{
+		printString("tes ah\r\n");
+		interrupt(0x21, 0x6, "milestone1", 0x2000, &suc);
+		printString("tes oh\r\n");
+	}
+	// while (1)
+	// {
 
-	logoPrint(0x0F, 0x03);
+	// }
+	// logoPrint(0x0F, 0x03);
 	while (1);
 }
 
@@ -104,42 +132,91 @@ void writeSector(char *buffer, int sector) {
 	interrupt(0x13, 0x301, buffer, div(sector, 36) * 0x100 + mod(sector, 18) + 1, mod(div(sector, 18), 2) * 0x100);
 }
 
+// void readFile(char *buffer, char *filename, int *success) {
+// 	char dir[SECTOR_SIZE];
+// 	char entry[DIR_ENTRY_LENGTH];
+// 	int fileFound;
+// 	int i;
+// 	int j;
+// 	int ij;
+// 	readSector(dir, DIR_SECTOR);
+// 	for (i = 0; i < SECTOR_SIZE; i+=DIR_ENTRY_LENGTH) {
+// 		fileFound = 1;
+// 		for (ij = 0; ij < MAX_FILENAME; ij++) {
+// 			if (dir[i + ij] != filename[ij]) {
+// 				fileFound = 0;
+// 			}
+// 		}
+// 		if (fileFound == 1) {
+// 			for (j = 0; j < DIR_ENTRY_LENGTH; j++) {
+// 				entry[j] = dir[i+j];
+// 			}
+// 			break;
+// 		}
+// 	}
+// 	if (fileFound == 0) {
+// 		*success = 0;
+// 		return;
+// 	} else {
+// 		int k = 0;
+// 		int search_byte = -999;
+// 		while ((k < MAX_SECTORS) && (search_byte != 0)) {
+// 			readSector(buffer + k * SECTOR_SIZE, entry[k]);
+// 			k++;
+// 		}
+// 		*success = 1;
+// 		return;
+// 	}
+
+// }
+
 void readFile(char *buffer, char *filename, int *success) {
 	char dir[SECTOR_SIZE];
-	char entry[DIR_ENTRY_LENGTH];
-	int fileFound;
-	int i;
-	int j;
-	int ij;
+	int iterDir = 0;
+	int iterFileName;
+	char ketemu = FALSE;
+	char sama;
+	int iterLastByte, i;
+	//Isi dir dengan list of semua filename
 	readSector(dir, DIR_SECTOR);
-	for (i = 0; i < SECTOR_SIZE; i+=DIR_ENTRY_LENGTH) {
-		fileFound = 1;
-		for (ij = 0; ij < MAX_FILENAME; ij++) {
-			if (dir[i + ij] != filename[ij]) {
-				fileFound = 0;
+	//Traversal dir
+	for (iterDir = 0; iterDir < SECTOR_SIZE; iterDir += DIR_ENTRY_LENGTH) {
+		sama = TRUE;
+		for (iterFileName = 0; iterFileName < MAX_FILENAME; iterFileName++) {
+			if (filename[iterFileName] == '\0') {
+				break;
+			}
+			else {
+				if (filename[iterFileName] != dir[iterDir + iterFileName]) {
+					sama = FALSE;
+					break;
+				}
 			}
 		}
-		if (fileFound == 1) {
-			for (j = 0; j < DIR_ENTRY_LENGTH; j++) {
-				entry[j] = dir[i+j];
-			}
+		if (sama) {
+			ketemu = TRUE;
 			break;
 		}
 	}
-	if (fileFound == 0) {
-		*success = 0;
-		return;
-	} else {
-		int k = 0;
-		int search_byte = -999;
-		while ((k < MAX_SECTORS) && (search_byte != 0)) {
-			readSector(buffer + k * SECTOR_SIZE, entry[k]);
-			k++;
-		}
-		*success = 1;
+	//Cek apakah sudah ketemu
+	if (!ketemu) {
+		*success = FALSE;
 		return;
 	}
-
+	else {
+		//Traversal 20 byte terakhir dari dir[iterDir] - dir[iterDir+32]
+		iterLastByte = iterDir + MAX_FILENAME;
+		for (i = 0; i < MAX_SECTORS; i++) {
+			if (dir[iterLastByte + i] == 0) {
+				break;
+			}
+			else {
+				readSector(buffer + i * SECTOR_SIZE, dir[iterLastByte + i]);
+			}
+		}
+		*success = TRUE;
+		return;
+	}
 }
 
 void clear(char *buffer, int length) { //Fungsi untuk mengisi buffer dengan 0
@@ -197,7 +274,7 @@ void writeFile(char *buffer, char *filename, int *sectors) {
 					++sectorCount;
 				}
 			}
-	}	
+		}	
 	}
 	else {
 		*sectors = INSUFFICIENT_DIR_ENTRIES;
@@ -211,37 +288,16 @@ void writeFile(char *buffer, char *filename, int *sectors) {
 void executeProgram(char *filename, int segment, int *success) {
 	char buffer[MAX_SECTORS * SECTOR_SIZE];
 	int i;
-	readFile(*buffer, *filename, *success);
-	for (i=0; i<MAX_SECTORS * SECTOR_SIZE; i++) {
-		putInMemory(segment, i, buffer[i]);
+	readFile(buffer, filename, success);
+	if (*success) {
+		for (i=0; i<MAX_SECTORS * SECTOR_SIZE; i++) {
+			putInMemory(segment, i, buffer[i]);
+		}
+		launchProgram(segment);
 	}
-	launchProgram(segment);
-}
-
-void printStringInCenter(int r, int line, int color, int background, char* logo){
-   int i=0;
-   int eq=0x8000+((r-1)*80*2)+(40-line/2)*2;
-   while(logo[i]!='\0'){
-      putInMemory(0xB000, eq + i*2, logo[i]);
-      putInMemory(0xB000, eq + i*2+1, color + (background<<4));
-      i++;
-   }
-}
-
-void logoPrint(int color, int bg) {
-
-
-printStringInCenter(7, 20, color, bg, "    =/\                 /\= ");
-printStringInCenter(8, 20, color, bg, "    / \'._   (\_/)   _.'/ \ ");
-printStringInCenter(9, 20, color, bg, "   / .''._'--(o.o)--'_.''. \ ");
-printStringInCenter(10, 20, color, bg, "  /.' _/ |`'=/ \" \='`| \_ `.\ ");
-printStringInCenter(11, 20, color, bg, " /` .' `\;-,'\___/',-;/` '. '\ ");
-printStringInCenter(12, 20, color, bg, "/.-'       `\(-V-)/`       `-.\ ");
-printStringInCenter(13, 20, color, bg, "`            \"  \"            ` ");
 }
 
 //Implementasi Fungsi Matematika 
-
 int mod(int x, int y) { 
     while (x>=y) {
         x-=y;
