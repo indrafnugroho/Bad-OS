@@ -180,54 +180,6 @@ void readFile(char *buffer, char *filename, int *success) {
 
 }
 
-// void readFile(char *buffer, char *filename, int *success) {
-// 	char dir[SECTOR_SIZE];
-// 	int iterDir = 0;
-// 	int iterFileName;
-// 	char ketemu = FALSE;
-// 	char sama;
-// 	int iterLastByte, i;
-	// //Isi dir dengan list of semua filename
-	// readSector(dir, DIR_SECTOR);
-	// //Traversal dir
-	// for (iterDir = 0; iterDir < SECTOR_SIZE; iterDir += DIR_ENTRY_LENGTH) {
-	// 	sama = TRUE;
-	// 	for (iterFileName = 0; iterFileName < MAX_FILENAME; iterFileName++) {
-	// 		if (filename[iterFileName] == '\0') {
-	// 			break;
-	// 		}
-	// 		else {
-	// 			if (filename[iterFileName] != dir[iterDir + iterFileName]) {
-	// 				sama = FALSE;
-	// 				break;
-	// 			}
-	// 		}
-	// 	}
-	// 	if (sama) {
-	// 		ketemu = TRUE;
-	// 		break;
-	// 	}
-	// }
-	// //Cek apakah sudah ketemu
-	// if (!ketemu) {
-	// 	*success = FALSE;
-	// 	return;
-	// }
-	// else {
-	// 	//Traversal 20 byte terakhir dari dir[iterDir] - dir[iterDir+32]
-	// 	iterLastByte = iterDir + MAX_FILENAME;
-	// 	for (i = 0; i < MAX_SECTORS; i++) {
-	// 		if (dir[iterLastByte + i] == 0) {
-	// 			break;
-	// 		}
-	// 		else {
-	// 			readSector(buffer + i * SECTOR_SIZE, dir[iterLastByte + i]);
-	// 		}
-	// 	}
-	// 	*success = TRUE;
-	// 	return;
-	// }
-// }
 
 void clear(char *buffer, int length) { //Fungsi untuk mengisi buffer dengan 0
 	int i;
