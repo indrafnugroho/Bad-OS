@@ -25,6 +25,7 @@ void readFile(char *buffer, char *filename, int *success);
 void clear(char *buffer, int length); //Fungsi untuk mengisi buffer dengan 0 (done)
 void writeFile(char *buffer, char *filename, int *sectors);
 void executeProgram(char *filename, int segment, int *success);
+void printLogo();
 
 //Fungsi Matematika
 int mod(int x, int y); //done
@@ -34,7 +35,7 @@ int div(int a,int b); //done
 int main() {
 	char buffer[512 * 20];
 	int suc;
-	printString("babibu\r\n");
+	printLogo();
 	makeInterrupt21();
 	// printLogo();
 	//Cari key.txt kalo udah ada
@@ -257,6 +258,16 @@ void executeProgram(char *filename, int segment, int *success) {
 		}
 		launchProgram(segment);
 	}
+}
+
+void printLogo () {
+printString(" /\\                 /\\\r\n");
+printString("/ \'._   (\\_/)   _.'/ \\\r\n");
+printString("|.''._'--(o.o)--'_.''.|\r\n");
+printString(" \\_ / `;=/ \" \\=;` \\ _/\r\n");
+printString("   `\\__| \\___/ |__/`\r\n");
+printString("jgs     \\(_|_)/\r\n");
+printString("         \" ` \"\r\n");
 }
 
 //Implementasi Fungsi Matematika 
