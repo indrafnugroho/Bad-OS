@@ -1,20 +1,3 @@
-
-#define MAX_BYTE 256
-#define SECTOR_SIZE 512
-#define MAX_FILES 16
-#define MAX_FILENAME 12
-#define MAX_SECTORS 20
-#define DIR_ENTRY_LENGTH 32
-#define MAP_SECTOR 1
-#define DIR_SECTOR 2
-#define TRUE 1
-#define FALSE 0
-#define INSUFFICIENT_SECTORS 0
-#define NOT_FOUND -1
-#define INSUFFICIENT_DIR_ENTRIES -1
-#define EMPTY 0x00
-#define USED 0xFF
-
 /* Ini deklarasi fungsi */
 void handleInterrupt21 (int AX, int BX, int CX, int DX);
 void printString(char *string); //done
@@ -37,26 +20,14 @@ int main() {
 	int suc;
 	printLogo();
 	makeInterrupt21();
-	// printLogo();
-	//Cari key.txt kalo udah ada
-	//Key.txt akan digenerate setelah manggil keyproc
-	//Jadi awalnya panggil keyproc dulu karena key.txt ga ada
-	//Lalu run lagi programnya, karena sudah ada key.txt, langsung keprint key nya
 	interrupt(0x21, 0x4, buffer, "key.txt", &suc);
-	if (suc)
-	{
+	if (suc) {
 		interrupt(0x21,0x0, "Key : ", 0, 0);
 	 	interrupt(0x21,0x0, buffer, 0, 0);
 	}
-	else
-	{
+	else {
 		interrupt(0x21, 0x6, "milestone1", 0x2000, &suc);
 	}
-	// while (1)
-	// {
-
-	// }
-	// logoPrint(0x0F, 0x03);
 	while (1);
 }
 
@@ -89,7 +60,7 @@ void handleInterrupt21 (int AX, int BX, int CX, int DX) {
 }
 
 // Implementasi fungsi
-void printString(char *string) { //WORK!!!
+void printString(char *string) {
 	int i = 0;
 	while(string[i] != '\0'){
 		interrupt(0x10, 0xE00 + string[i], 0, 0, 0);
@@ -128,7 +99,7 @@ void writeSector(char *buffer, int sector) {
 }
 
 void readFile(char *buffer, char *filename, int *success) {
-	char dir[SECTOR_SIZE];
+	char dir[512];
 	char entry[32];
 	int fileFound;
 	int i;
@@ -163,20 +134,11 @@ void readFile(char *buffer, char *filename, int *success) {
 			if (dir[startLast20Bytes + k] == 0) {
 				break;
 			} else {
-				readSector(buffer + k * SECTOR_SIZE, dir[startLast20Bytes + k]);
+				readSector(buffer + k * 512, dir[startLast20Bytes + k]);
 			}
 		}
 		*success = 1;
 		return;
-
-		// int k = 0;
-		// int search_byte = -999;
-		// while ((k < MAX_SECTORS) && (search_byte != 0)) {
-		// 	readSector(buffer + k * SECTOR_SIZE, entry[k]);
-		// 	k++;
-		// }
-		// *success = 1;
-		// return;
 	}
 
 }
@@ -190,48 +152,47 @@ void clear(char *buffer, int length) { //Fungsi untuk mengisi buffer dengan 0
 } 
 
 void writeFile(char *buffer, char *filename, int *sectors) {
-	char map[SECTOR_SIZE];
-	char dir[SECTOR_SIZE];
-	char sectorBuffer[SECTOR_SIZE];
+	char map[512];
+	char dir[512];
+	char sectorBuffer[512];
 	int dirIndex;
 
-	readSector(map, MAP_SECTOR);
-	readSector(dir, DIR_SECTOR);
+	readSector(map, 1);
+	readSector(dir, 2);
 
-	for (dirIndex = 0; dirIndex < MAX_FILES; ++dirIndex) {
-		if (dir[dirIndex * DIR_ENTRY_LENGTH] == '\0') {
+	for (dirIndex = 0; dirIndex < 16; ++dirIndex) {
+		if (dir[dirIndex * 32] == '\0') {
 			break;
 		}
 	}
-	if (dirIndex < MAX_FILES) {
+	if (dirIndex < 16) {
 		int i, j, sectorCount;
-		for (i = 0, sectorCount = 0; i < MAX_BYTE && sectorCount < *sectors; ++i) {
-			if (map[i] == EMPTY) {
+		for (i = 0, sectorCount = 0; i < 256 && sectorCount < *sectors; ++i) {
+			if (map[i] == 0x00) {
 				++sectorCount;
 			}
 		}
 		if (sectorCount < *sectors) {
-			*sectors = INSUFFICIENT_SECTORS;
+			*sectors = 0; //insufficient
 			return;
 		}
 		else {
-			clear(dir + dirIndex * DIR_ENTRY_LENGTH, DIR_ENTRY_LENGTH);
-			for (i = 0; i < MAX_FILENAME; ++i) {
+			clear(dir + dirIndex * 32, 32);
+			for (i = 0; i < 12; ++i) {
 				if (filename[i] != '\0') {
-					dir[dirIndex * DIR_ENTRY_LENGTH + i] = filename[i];
+					dir[dirIndex * 32 + i] = filename[i];
 				}
 				else {
 					break;
 				}
 			}
-			for (i = 0, sectorCount = 0; i < MAX_BYTE && sectorCount < *sectors; ++i) {
-				if (map[i] == EMPTY) {
-					map[i] = USED;
-					dir[dirIndex * DIR_ENTRY_LENGTH + MAX_FILENAME +
-					sectorCount] = i;
-					clear(sectorBuffer, SECTOR_SIZE);
-					for (j = 0; j < SECTOR_SIZE; ++j) {
-						sectorBuffer[j] = buffer[sectorCount * SECTOR_SIZE + j];
+			for (i = 0, sectorCount = 0; i < 256 && sectorCount < *sectors; ++i) {
+				if (map[i] == 0x00) {
+					map[i] = 0xFF;
+					dir[dirIndex * 32 + 12 + sectorCount] = i;
+					clear(sectorBuffer, 512);
+					for (j = 0; j < 512; ++j) {
+						sectorBuffer[j] = buffer[sectorCount * 512 + j];
 					}
 					writeSector(sectorBuffer, i);
 					++sectorCount;
@@ -240,20 +201,20 @@ void writeFile(char *buffer, char *filename, int *sectors) {
 		}	
 	}
 	else {
-		*sectors = INSUFFICIENT_DIR_ENTRIES;
+		*sectors = -1; //insufficient dir entries
 		return;
 	}
 	
-	writeSector(map, MAP_SECTOR);
-	writeSector(dir, DIR_SECTOR);
+	writeSector(map, 1);
+	writeSector(dir, 2);
 }
 
 void executeProgram(char *filename, int segment, int *success) {
-	char buffer[MAX_SECTORS * SECTOR_SIZE];
+	char buffer[20 * 512];
 	int i;
 	readFile(buffer, filename, success);
 	if (*success) {
-		for (i=0; i<MAX_SECTORS * SECTOR_SIZE; i++) {
+		for (i=0; i<20 * 512; i++) {
 			putInMemory(segment, i, buffer[i]);
 		}
 		launchProgram(segment);
