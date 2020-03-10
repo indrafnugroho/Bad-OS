@@ -31,33 +31,38 @@ int main() {
 	while (1);
 }
 
+
 void handleInterrupt21 (int AX, int BX, int CX, int DX) {
-	switch (AX) {
-		case 0x0:
+	char AL, AH;
+	AL = (char) (AX);
+	AH = (char) (AX >> 8);
+	switch (AL) {
+		case 0x00:
 			printString(BX);
 			break;
-		case 0x1:
+		case 0x01:
 			readString(BX);
 			break;
-		case 0x2:
+		case 0x02:
 			readSector(BX, CX);
 			break;
-		case 0x3:
+		case 0x03:
 			writeSector(BX, CX);
 			break;
-		case 0x4:
-			readFile(BX, CX, DX);
+		case 0x04:
+			readFile(BX, CX, DX, AH);
 			break;
-		case 0x5:
-			writeFile(BX, CX, DX);
+		case 0x05:
+			writeFile(BX, CX, DX, AH);
 			break;
-		case 0x6:
-			executeProgram(BX, CX, DX);
-			break;
+		case 0x06:
+			executeProgram(BX, CX, DX, AH);
+			Break;
 		default:
 			printString("Invalid interrupt");
 	}
 }
+
 
 // Implementasi fungsi
 void printString(char *string) {
@@ -98,7 +103,9 @@ void writeSector(char *buffer, int sector) {
 	interrupt(0x13, 0x301, buffer, div(sector, 36) * 0x100 + mod(sector, 18) + 1, mod(div(sector, 18), 2) * 0x100);
 }
 
-void readFile(char *buffer, char *filename, int *success) {
+// void readFile(char *buffer, char *path, int *result, char parentIndex);
+
+void readFile(char *buffer, char *filename, int *success, char parentIndex) {
 	char dir[512];
 	char entry[32];
 	int fileFound;
@@ -150,6 +157,8 @@ void clear(char *buffer, int length) { //Fungsi untuk mengisi buffer dengan 0
 		buffer[i] = 0x00;
 	}
 } 
+
+// void writeFile(char *buffer, char *path, int *sectors, char parentIndex);
 
 void writeFile(char *buffer, char *filename, int *sectors) {
 	char map[512];
