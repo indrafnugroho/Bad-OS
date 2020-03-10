@@ -222,13 +222,13 @@ void executeProgram(char *filename, int segment, int *success) {
 }
 
 void printLogo () {
-printString(" /\\                 /\\\r\n");
-printString("/ \'._   (\\_/)   _.'/ \\\r\n");
-printString("|.''._'--(o.o)--'_.''.|\r\n");
-printString(" \\_ / `;=/ \" \\=;` \\ _/\r\n");
-printString("   `\\__| \\___/ |__/`\r\n");
-printString("jgs     \\(_|_)/\r\n");
-printString("         \" ` \"\r\n");
+	printString(" /\\                 /\\\r\n");
+	printString("/ \'._   (\\_/)   _.'/ \\\r\n");
+	printString("|.''._'--(o.o)--'_.''.|\r\n");
+	printString(" \\_ / `;=/ \" \\=;` \\ _/\r\n");
+	printString("   `\\__| \\___/ |__/`\r\n");
+	printString("jgs     \\(_|_)/\r\n");
+	printString("         \" ` \"\r\n");
 }
 
 //Implementasi Fungsi Matematika 
