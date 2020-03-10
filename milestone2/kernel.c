@@ -301,4 +301,21 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
 			isFound = 1;
 		}
 	}
+
+	if (!isFound) *result = -1;
+	else {
+		//convert idxparent ke int dulu
+		int pConv = convertHexToInt(idxParent);
+		char s = files[pConv + 1];
+		char sectors[512];
+		readSector(sectors,259);
+		//convert s to int dulu
+		int sConv = convertHexToInt(s); //ini belum ya gengs
+		int n = 0;
+		while (sectors[sConv + n] != '\0') {
+			buffer[n] = sectors[sConv+n];
+			n++;
+		}
+		*result = 1; //ini masih sementara
+	}
 }
