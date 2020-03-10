@@ -245,3 +245,51 @@ int div (int x, int y) {
 	}return(ratio-1);
 }
 
+//read file
+//1. while pertama, sampai path nya abis
+//baca path nya sampe ketemu / lalu taro setiap directorynya ke array of 
+
+void readFile(char *buffer, char *path, int *result, char parentIndex) {
+	char idxParent = parentIndex;
+	char files[1024];
+	readSector(files, 257);
+	
+	int isFound = 0;
+	int isWrongName = 0;
+	int isNameTrue;
+	int i = 0;
+	int j;
+	while(!isFound) {
+		j = i;
+		isNameTrue = 0;
+		while (path[i] != '/' && path[i] != '\0') {
+			i++;
+		}
+		//finding nemo
+		int k;
+		//search for parent idx with matching path name
+		for (k=0; k < 1024; k+=16) {
+			if (files[k] == idxParent) {
+				int m = k+2;
+				//matching name
+				int h;
+				for (h=0; h < i-j-1; h++) {
+					if (path[j+h] != files[m+h]) {
+						break;
+					}
+				} if (h == i-j-1) {
+					isNameTrue = 1;
+					idxParent = k; //in hexa gengs
+					break;
+				}
+			}
+		}
+		if (k==1024) break; // break while terluar
+		
+		if (path[i] == '/') {
+			i++;
+		} else {
+			isFound = 1;
+		}
+	}
+}
