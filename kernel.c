@@ -37,26 +37,14 @@ int main() {
 	int suc;
 	printLogo();
 	makeInterrupt21();
-	// printLogo();
-	//Cari key.txt kalo udah ada
-	//Key.txt akan digenerate setelah manggil keyproc
-	//Jadi awalnya panggil keyproc dulu karena key.txt ga ada
-	//Lalu run lagi programnya, karena sudah ada key.txt, langsung keprint key nya
 	interrupt(0x21, 0x4, buffer, "key.txt", &suc);
-	if (suc)
-	{
+	if (suc) {
 		interrupt(0x21,0x0, "Key : ", 0, 0);
 	 	interrupt(0x21,0x0, buffer, 0, 0);
 	}
-	else
-	{
+	else {
 		interrupt(0x21, 0x6, "milestone1", 0x2000, &suc);
 	}
-	// while (1)
-	// {
-
-	// }
-	// logoPrint(0x0F, 0x03);
 	while (1);
 }
 
@@ -89,7 +77,7 @@ void handleInterrupt21 (int AX, int BX, int CX, int DX) {
 }
 
 // Implementasi fungsi
-void printString(char *string) { //WORK!!!
+void printString(char *string) {
 	int i = 0;
 	while(string[i] != '\0'){
 		interrupt(0x10, 0xE00 + string[i], 0, 0, 0);
@@ -168,15 +156,6 @@ void readFile(char *buffer, char *filename, int *success) {
 		}
 		*success = 1;
 		return;
-
-		// int k = 0;
-		// int search_byte = -999;
-		// while ((k < MAX_SECTORS) && (search_byte != 0)) {
-		// 	readSector(buffer + k * SECTOR_SIZE, entry[k]);
-		// 	k++;
-		// }
-		// *success = 1;
-		// return;
 	}
 
 }
