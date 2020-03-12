@@ -32,32 +32,52 @@ void main(int argc, char* argv[]) {
 
   // load the disk map
   char map[512];
-  fseek(floppy, 512, SEEK_SET);
+  fseek(floppy, 512 * 0x100, SEEK_SET);
   for (i = 0; i < 512; i++) map[i] = fgetc(floppy);
 
   // load the directory
-  char dir[512];
-  fseek(floppy, 512 * 2, SEEK_SET);
-  for (i = 0; i < 512; i++) dir[i] = fgetc(floppy);
+  char dir[1024];
+  fseek(floppy, 512 * 0x101, SEEK_SET);
+  for (i = 0; i < 1024; i++) dir[i] = fgetc(floppy);
+
+  // load the sector map
+  char sector[512];
+  fseek(floppy, 512 * 0x103, SEEK_SET);
+  for (i = 0; i < 512; i++) sector[i] = fgetc(floppy);
 
   // find a free entry in the directory
-  for (i = 0; i < 512; i = i + 0x20)
-    if (dir[i] == 0) break;
-  if (i == 512) {
+  for (i = 0; i < 1024; i = i + 16)
+    if (dir[i] == 0 && dir[i+1] == 0 && dir[i+2] == 0) break;
+  if (i == 1024) {
     printf("Not enough room in directory\n");
     return;
   }
   int dirindex = i;
 
   // fill the name field with 00s first
-  for (i = 0; i < 12; i++) dir[dirindex + i] = 0x00;
+  for (i = 0; i < 14; i++) dir[dirindex + i + 2] = 0x00;
   // copy the name over
-  for (i = 0; i < 12; i++) {
+  for (i = 0; i < 14; i++) {
     if (argv[1][i] == 0) break;
-    dir[dirindex + i] = argv[1][i];
+    dir[dirindex + i + 2] = argv[1][i];
   }
 
-  dirindex = dirindex + 12;
+  dirindex = dirindex + 12; 
+
+  // Untuk sectors
+  for (i = 0; i < 32; i++) {
+    
+    if (sector[i*16] == 0) break;
+  }
+
+  if (i == 32) {
+    printf("No sector available\n");
+    return;
+  }
+
+  int sectIndex = i;
+  dir[dirindex] = 0xFF;
+  dir[dirindex + 1] = sectIndex;
 
   // find free sectors and add them to the file
   int sectcount = 0;
@@ -79,8 +99,11 @@ void main(int argc, char* argv[]) {
     map[i] = 0xFF;
 
     // mark the sector in the directory entry
-    dir[dirindex] = i;
-    dirindex++;
+    // dir[dirindex] = i;
+    // dirindex++;
+    // sectcount++;
+
+    sector[sectIndex * 16 + sectcount] = i;
     sectcount++;
 
     printf("Loaded %s to sector %d\n", argv[1], i);
@@ -99,10 +122,13 @@ void main(int argc, char* argv[]) {
   }
 
   // write the map and directory back to the floppy image
-  fseek(floppy, 512, SEEK_SET);
+  fseek(floppy, 512 * 0x100, SEEK_SET);
   for (i = 0; i < 512; i++) fputc(map[i], floppy);
 
-  fseek(floppy, 512 * 2, SEEK_SET);
+  fseek(floppy, 512 * 0x101, SEEK_SET);
+  for (i = 0; i < 1024; i++) fputc(dir[i], floppy);
+
+  fseek(floppy, 512 * 0x103, SEEK_SET);
   for (i = 0; i < 512; i++) fputc(dir[i], floppy);
 
   fclose(floppy);

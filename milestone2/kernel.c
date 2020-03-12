@@ -109,6 +109,7 @@ void readFile(char *buffer, char *filename, int *success) {
 	int k;
 	char check = 0;
 	readSector(dir, 2);
+	readSector(dir + 512, 3);
 	for (i = 0; i < 512; i+=32) {
 		fileFound = 1;
 		for (ij = 0; ij < 12; ij++) {
