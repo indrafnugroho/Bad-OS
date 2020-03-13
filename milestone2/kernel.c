@@ -18,7 +18,7 @@ int div(int a,int b); //done
 int main() {
 	char buffer[512 * 16];
 	int suc;
-	printString("JANCOK");
+	printString("       KAMPRET\r\n");
 	printLogo();
 	printString("masuk shell gak?\r\n");
 	makeInterrupt21();
@@ -118,7 +118,6 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
 	int j = 0;
 	int sectorSize = 512;
 
-
 	readSector(&files, 257);
 	// k=512;
 	readSector(&tempBuffer, 258);
@@ -130,8 +129,8 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
 		//search for parent idx with matching path name
 		for (k; k < sectorSize*2; k+=16) {
 			if (files[k] == parentIndex) {
-				idxName = k+2;
-				if (files[idxName] != 0x0 && files[k+1] != 0xFF) {
+				if (files[k+2] != 0x0 && files[k+1] != 0xFF) {
+					idxName = k+2;
 					//matching name
 					isNameMatch = 1;
 					for (h=0; h < 14; h++) {
