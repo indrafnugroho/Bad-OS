@@ -176,7 +176,48 @@ void clear(char *buffer, int length) { //Fungsi untuk mengisi buffer dengan 0
 	}
 } 
 
-// void writeFile(char *buffer, char *path, int *sectors, char parentIndex);
+void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
+	char map[512];
+	char files[1024];
+	int i, countSector;
+
+	// Baca sektor di map cukup apa nggak
+	readSector(map, 0x100);
+	for (i = 0, countSector = 0; i < 256 && sectorCount < *sectors; i++) {
+		if (map[i] == 0x00) {
+			sectorCount++:
+		}
+	}
+
+	// Apabila jumlah sektor di map tidak cukup
+	if (countSector < *sectors) {
+		*sectors = 0;
+		return;
+	}
+
+	// Mencari entry yang kosong pada files
+	readSector(files, 0x101);
+	for (i = 0; i < 1024; i += 16) {
+		if (files[i] == '\0') {
+			break;
+		}
+	}
+
+	// Apabila tidak ada entry yang kosong
+	if (i == 1024) {
+		*sectors = -3;
+	}
+
+	// Sama kayak di readfile, pake while sampe gaada / lagi (file paling ujung)
+	// Misal abc/def/g, looping sampe dapet g.
+	// def simpen di variabel, misalnya x
+
+	// Kalo udah di file terakhir (paling ujung gaada / lagi), cek ada yang namanya sama gak
+
+	// Tulis indeks parent diisi ama x
+
+	// sisanya gangerti
+}
 
 // void writeFile(char *buffer, char *filename, int *sectors) {
 // 	char map[512];
