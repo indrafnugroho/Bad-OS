@@ -4,9 +4,9 @@ void printString(char *string); //done
 void readString(char *string); //done
 void readSector(char *buffer, int sector); //done
 void writeSector(char *buffer, int sector); //done
-void readFile(char *buffer, char *filename, int *success);
 void clear(char *buffer, int length); //Fungsi untuk mengisi buffer dengan 0 (done)
-void writeFile(char *buffer, char *filename, int *sectors);
+void writeFile(char *buffer, char *path, int *sectors, char parentIndex);
+void readFile(char *buffer, char *path, int *result, char parentIndex);
 void executeProgram(char *filename, int segment, int *success);
 void printLogo();
 
@@ -103,158 +103,6 @@ void writeSector(char *buffer, int sector) {
 	interrupt(0x13, 0x301, buffer, div(sector, 36) * 0x100 + mod(sector, 18) + 1, mod(div(sector, 18), 2) * 0x100);
 }
 
-// void readFile(char *buffer, char *path, int *result, char parentIndex);
-
-void readFile(char *buffer, char *filename, int *success, char parentIndex) {
-	char dir[512];
-	char entry[32];
-	int fileFound;
-	int i;
-	int j;
-	int ij;
-	int startLast20Bytes;
-	int k;
-	char check = 0;
-	readSector(dir, 2);
-	readSector(dir + 512, 3);
-	for (i = 0; i < 512; i+=32) {
-		fileFound = 1;
-		for (ij = 0; ij < 12; ij++) {
-			if (filename[ij] == '\0') {
-				break;
-			}
-			else if (dir[i + ij] != filename[ij]) {
-				fileFound = 0;
-				break;
-			}
-		}
-		if (fileFound) {
-			check = 1;
-			break;
-		}
-	}
-	if (!check) {
-		*success = 0;
-		return;
-	} else {
-		startLast20Bytes = i + 12;
-		for (k = 0; k < 20; k++) {
-			if (dir[startLast20Bytes + k] == 0) {
-				break;
-			} else {
-				readSector(buffer + k * 512, dir[startLast20Bytes + k]);
-			}
-		}
-		*success = 1;
-		return;
-	}
-
-}
-
-
-void clear(char *buffer, int length) { //Fungsi untuk mengisi buffer dengan 0
-	int i;
-	for(i = 0; i < length; ++i){
-		buffer[i] = 0x00;
-	}
-} 
-
-// void writeFile(char *buffer, char *path, int *sectors, char parentIndex);
-
-void writeFile(char *buffer, char *filename, int *sectors) {
-	char map[512];
-	char dir[512];
-	char sectorBuffer[512];
-	int dirIndex;
-
-	readSector(map, 1);
-	readSector(dir, 2);
-
-	for (dirIndex = 0; dirIndex < 16; ++dirIndex) {
-		if (dir[dirIndex * 32] == '\0') {
-			break;
-		}
-	}
-	if (dirIndex < 16) {
-		int i, j, sectorCount;
-		for (i = 0, sectorCount = 0; i < 256 && sectorCount < *sectors; ++i) {
-			if (map[i] == 0x00) {
-				++sectorCount;
-			}
-		}
-		if (sectorCount < *sectors) {
-			*sectors = 0; //insufficient
-			return;
-		}
-		else {
-			clear(dir + dirIndex * 32, 32);
-			for (i = 0; i < 12; ++i) {
-				if (filename[i] != '\0') {
-					dir[dirIndex * 32 + i] = filename[i];
-				}
-				else {
-					break;
-				}
-			}
-			for (i = 0, sectorCount = 0; i < 256 && sectorCount < *sectors; ++i) {
-				if (map[i] == 0x00) {
-					map[i] = 0xFF;
-					dir[dirIndex * 32 + 12 + sectorCount] = i;
-					clear(sectorBuffer, 512);
-					for (j = 0; j < 512; ++j) {
-						sectorBuffer[j] = buffer[sectorCount * 512 + j];
-					}
-					writeSector(sectorBuffer, i);
-					++sectorCount;
-				}
-			}
-		}	
-	}
-	else {
-		*sectors = -1; //insufficient dir entries
-		return;
-	}
-	
-	writeSector(map, 1);
-	writeSector(dir, 2);
-}
-
-void executeProgram(char *filename, int segment, int *success) {
-	char buffer[20 * 512];
-	int i;
-	readFile(buffer, filename, success);
-	if (*success) {
-		for (i=0; i<20 * 512; i++) {
-			putInMemory(segment, i, buffer[i]);
-		}
-		launchProgram(segment);
-	}
-}
-
-void printLogo () {
-	printString(" /\\                 /\\\r\n");
-	printString("/ \'._   (\\_/)   _.'/ \\\r\n");
-	printString("|.''._'--(o.o)--'_.''.|\r\n");
-	printString(" \\_ / `;=/ \" \\=;` \\ _/\r\n");
-	printString("   `\\__| \\___/ |__/`\r\n");
-	printString("jgs     \\(_|_)/\r\n");
-	printString("         \" ` \"\r\n");
-}
-
-//Implementasi Fungsi Matematika 
-int mod(int x, int y) { 
-    while (x>=y) {
-        x-=y;
-    }return x;
-}
-
-int div (int x, int y) {
-	int ratio = 0;
-	while(ratio*y <= x) {
-		ratio += 1;
-	}return(ratio-1);
-}
-
 //read file
 //1. while pertama, sampai path nya abis
 //baca path nya sampe ketemu / lalu taro setiap directorynya ke array of 
@@ -319,4 +167,107 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
 		}
 		*result = 1; //ini masih sementara
 	}
+}
+
+void clear(char *buffer, int length) { //Fungsi untuk mengisi buffer dengan 0
+	int i;
+	for(i = 0; i < length; ++i){
+		buffer[i] = 0x00;
+	}
+} 
+
+// void writeFile(char *buffer, char *path, int *sectors, char parentIndex);
+
+// void writeFile(char *buffer, char *filename, int *sectors) {
+// 	char map[512];
+// 	char dir[512];
+// 	char sectorBuffer[512];
+// 	int dirIndex;
+
+// 	readSector(map, 1);
+// 	readSector(dir, 2);
+
+// 	for (dirIndex = 0; dirIndex < 16; ++dirIndex) {
+// 		if (dir[dirIndex * 32] == '\0') {
+// 			break;
+// 		}
+// 	}
+// 	if (dirIndex < 16) {
+// 		int i, j, sectorCount;
+// 		for (i = 0, sectorCount = 0; i < 256 && sectorCount < *sectors; ++i) {
+// 			if (map[i] == 0x00) {
+// 				++sectorCount;
+// 			}
+// 		}
+// 		if (sectorCount < *sectors) {
+// 			*sectors = 0; //insufficient
+// 			return;
+// 		}
+// 		else {
+// 			clear(dir + dirIndex * 32, 32);
+// 			for (i = 0; i < 12; ++i) {
+// 				if (filename[i] != '\0') {
+// 					dir[dirIndex * 32 + i] = filename[i];
+// 				}
+// 				else {
+// 					break;
+// 				}
+// 			}
+// 			for (i = 0, sectorCount = 0; i < 256 && sectorCount < *sectors; ++i) {
+// 				if (map[i] == 0x00) {
+// 					map[i] = 0xFF;
+// 					dir[dirIndex * 32 + 12 + sectorCount] = i;
+// 					clear(sectorBuffer, 512);
+// 					for (j = 0; j < 512; ++j) {
+// 						sectorBuffer[j] = buffer[sectorCount * 512 + j];
+// 					}
+// 					writeSector(sectorBuffer, i);
+// 					++sectorCount;
+// 				}
+// 			}
+// 		}	
+// 	}
+// 	else {
+// 		*sectors = -1; //insufficient dir entries
+// 		return;
+// 	}
+	
+// 	writeSector(map, 1);
+// 	writeSector(dir, 2);
+// }
+
+void executeProgram(char *filename, int segment, int *success) {
+	char buffer[20 * 512];
+	int i;
+	readFile(buffer, filename, success);
+	if (*success) {
+		for (i=0; i<20 * 512; i++) {
+			putInMemory(segment, i, buffer[i]);
+		}
+		launchProgram(segment);
+	}
+}
+
+void printLogo () {
+	printString(" /\\                 /\\\r\n");
+	printString("/ \'._   (\\_/)   _.'/ \\\r\n");
+	printString("|.''._'--(o.o)--'_.''.|\r\n");
+	printString(" \\_ / `;=/ \" \\=;` \\ _/\r\n");
+	printString("   `\\__| \\___/ |__/`\r\n");
+	printString("jgs     \\(_|_)/\r\n");
+	printString("         \" ` \"\r\n");
+}
+
+//Implementasi Fungsi Matematika 
+int mod(int x, int y) { 
+    while (x>=y) {
+        x-=y;
+    }return x;
+}
+
+int div (int x, int y) {
+	int ratio = 0;
+	while(ratio*y <= x) {
+		ratio += 1;
+	}return(ratio-1);
 }
