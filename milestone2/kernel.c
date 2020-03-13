@@ -118,24 +118,24 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
 	int isWrongName = 0;
 	// int isNameTrue;
 	int i = 0;
-<<<<<<< HEAD
-	int j, k, m, n, h;
-	
-	
-	readSector(files, 0x101); //add files from sector 0x101
-	//add files from sector 0x102
+	int j;
+	int k;
+	int m;
+	int h;
+	char s;
+	char sectors[512];
 	int sConv;
 	int n;
 
 
 	readSector(files, 257);
 	readSector(files + 512, 258);
->>>>>>> 5ed467dd3496c9afeece2509b9ce64165b043497
 	while(!isFound) {
 		j = i;
 		// isNameTrue = 0;
 		while (path[i] != '/' && path[i] != '\0') {
 			i++;
+		}
 		//finding nemo
 		
 		//search for parent idx with matching path name
@@ -191,7 +191,7 @@ void clear(char *buffer, int length) { //Fungsi untuk mengisi buffer dengan 0
 void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 	char map[512];
 	char files[1024];
-	int i, countSector, entryIndex;
+	int i, countSector;
 	char idxParent = parentIndex;
 	int entryIndex;
 	int isFound, isNameAlreadyExists, j, k, h, m, isNameTrue, n;
