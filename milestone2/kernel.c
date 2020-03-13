@@ -114,12 +114,12 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
 	
 	int isFound = 0;
 	int isWrongName = 0;
-	int isNameTrue;
+	// int isNameTrue;
 	int i = 0;
 	int j;
 	while(!isFound) {
 		j = i;
-		isNameTrue = 0;
+		// isNameTrue = 0;
 		while (path[i] != '/' && path[i] != '\0') {
 			i++;
 		}
@@ -136,7 +136,7 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
 						break;
 					}
 				} if (h == i-j-1) {
-					isNameTrue = 1;
+					// isNameTrue = 1;
 					idxParent = k; //in hexa gengs
 					break;
 				}
@@ -180,6 +180,7 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 	char map[512];
 	char files[1024];
 	int i, countSector;
+	char idxParent = parentIndex;
 
 	// Baca sektor di map cukup apa nggak
 	readSector(map, 0x100);
@@ -206,6 +207,76 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 	// Apabila tidak ada entry yang kosong
 	if (i == 1024) {
 		*sectors = -3;
+	}
+
+	int isFound = 0;
+	int isNameAlreadyExists = 1;
+	int i = 0;
+	int j = 0;
+	while (!isFound) {
+		j = i;
+		// isNameTrue = 0;
+		while (path[i] != '/' && path[i] != '\0') {
+			i++;
+		}
+
+		//finding nemo
+		int k;
+		if (path[i] == '\0') {
+			isFound = 1;
+
+			//search for parent idx with matching path name
+			for (k=0; k < 1024; k+=16) {
+				if (files[k] == idxParent) {
+					int m = k+2;
+					//matching name
+					int h;
+					for (h=0; h < i-j-1; h++) {
+						if (path[j+h] != files[m+h]) {
+							break;
+						}
+					} 
+					if (h == i-j-1) {
+						isNameAlreadyExists = 0;
+						break;
+					}
+				}
+			}
+		} else {
+			
+			//search for parent idx with matching path name
+			for (k=0; k < 1024; k+=16) {
+				if (files[k] == idxParent) {
+					int m = k+2;
+					//matching name
+					int h;
+					for (h=0; h < i-j-1; h++) {
+						if (path[j+h] != files[m+h]) {
+							break;
+						}
+					} if (h == i-j-1) {
+						isNameTrue = 1;
+						idxParent = k; //in hexa gengs
+						break;
+					}
+				}
+			}
+
+			if (k==1024) break; // break while terluar
+			i++;
+		}
+	}
+
+	if (!isFound) {
+		*sectors = -1;
+		return;
+	} else {
+		char entryName[i -j];
+		for (int k = 0; k < i - j; k++) {
+			char entryName = path[i - j + k];
+		}
+
+
 	}
 
 	// Sama kayak di readfile, pake while sampe gaada / lagi (file paling ujung)
