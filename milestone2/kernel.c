@@ -18,7 +18,7 @@ int div(int a,int b); //done
 int main() {
 	char buffer[512 * 16];
 	int suc;
-	printString("JANCOK");
+	printString("       KAMPRET\r\n");
 	printLogo();
 	printString("masuk shell gak?\r\n");
 	makeInterrupt21();
@@ -113,22 +113,24 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
 	char tempBuffer[512];
 	char tempBuffer2[512];
 	int isFound = 0;
-	int isNameMatch, k, s, j, idxName;
+	int isNameMatch, k, s, idxName;
 	int h, l;
+	int j = 0;
+	int sectorSize = 512;
 
 	readSector(&files, 257);
 	// k=512;
 	readSector(&tempBuffer, 258);
-	for (k=512; k < 1024; k++) {
+	for (k=sectorSize; k < sectorSize*2; k++) {
 		files[k] = tempBuffer[k-512];
 	}
 	k = 0;
 	while(!isFound) {
 		//search for parent idx with matching path name
-		for (k; k < 1024; k+=16) {
+		for (k; k < sectorSize*2; k+=16) {
 			if (files[k] == parentIndex) {
-				idxName = k+2;
-				if (files[idxName] != 0x0 && files[k+1] != 0xFF) {
+				if (files[k+2] != 0x0 && files[k+1] != 0xFF) {
+					idxName = k+2;
 					//matching name
 					isNameMatch = 1;
 					for (h=0; h < 14; h++) {
@@ -136,17 +138,24 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
 							isNameMatch = 0;
 							break;
 						}
+						else if (files[idxName + h] == '\0' && path[j] == '\0') {
+                        	break;
+                    	}
 					} 
-					
 					if (isNameMatch) {
 						isFound = 1;
 						s = files[k+1]; //in hexa gengs
-						break;
 					}
 				}
 			}
+
+			if (isFound) {
+				break;
+			}
 		}
-		if (k==1024) break; // break while terluar
+		if (k==sectorSize*2) {
+			break;
+		}  // break while terluar
 	}
 
 	if (!isFound) {
@@ -157,19 +166,15 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
 		//convert idxparent ke int dulu
 		// int pConv = convertHexToInt(idxParent);
 		// s = files[idxParent + 1];
-		
 		readSector(&tempBuffer,259);
 		//convert s to int dulu
 		//sConv = s; //ini belum ya gengs
-		j = 0;
-		while (j < 16 && tempBuffer[s*16 + j] != '\0') {
-			readSector(&tempBuffer2, tempBuffer[s*16 + j]);
-			for (l=0; l < 512; l++) {
-				buffer[l + 512*j] = tempBuffer2[l];
-			}
-			j++;
-		}
-		*result = 1; //ini kayanya fix
+		while ((j<16)&&(tempBuffer[j+s*16]!='\0')) {
+			readSector(&tempBuffer2, tempBuffer[j + s*16]);
+			for(l=0;l<sectorSize;++l) {
+				buffer[sectorSize*j+l] = tempBuffer2[l];
+			} ++j;
+		} *result = 1; //ini kayanya fix
 		// printString("ini bisa gaes\r\n");
 	}
 }
