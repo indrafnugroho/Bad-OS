@@ -18,17 +18,18 @@ int div(int a,int b); //done
 int main() {
 	char buffer[512 * 16];
 	int suc;
-	readFile(&buffer, "tes.txt", &suc, 0xFF); //tes fungsi read file
-	printString("        KAMPRET\r\n");
+	printString("JANCOK");
 	printLogo();
+	printString("masuk shell gak?\r\n");
 	makeInterrupt21();
-
+	handleInterrupt21(0XFF06, "shell", 0x2000, &suc);
+	// interrupt(0x21, 0xFF << 8 | 0x6, "shell", 0x2000, &suc);
 	if (suc) {
-		printString(buffer);
+		printString("berhasil\r\n");
+	} else {
+		printString("gagal\r\n");
 	}
-	else {
-		printString("tes gagal\r\n");
-	}
+	printString("huhu\r\n");
 	while (1);
 }
 
@@ -93,7 +94,6 @@ void readString(char *string) {
 		}
 	} while (input != '\r');
 	interrupt(0x10, 0xE00 + '\r', 0, 0, 0);
-
 }
 
 void readSector(char *buffer, int sector) {
@@ -179,7 +179,6 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
 		// printString("ini bisa gaes\r\n");
 	}
 }
-
 void clear(char *buffer, int length) { //Fungsi untuk mengisi buffer dengan 0
 	int i;
 	for(i = 0; i < length; ++i){
@@ -310,21 +309,31 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 
 		*sectors = 1;
 	}
+
+
+
+	
+
 	// Tulis indeks parent diisi ama x
 }
 
+
 void executeProgram(char *filename, int segment, int *success) {
-	char buffer[16 * 512];
+	char bufferFile[512 * 16];
 	int i;
-	readFile(&buffer, filename, success, 0xFF);
+	
+	readFile(&bufferFile, filename, success, 0xFF);
 	if (*success) {
-		for (i=0; i<20 * 512; i++) {
-			putInMemory(segment, i, buffer[i]);
+		interrupt(0x21, 0, "File exist!\r\n", 0, 0);
+		for (i=0; i<512 * 16; i++) {
+			putInMemory(segment, i, bufferFile[i]);
 		}
 		launchProgram(segment);
 	} else {
 		interrupt(0x21, 0, "File doesn't exist!", 0, 0);
 	}
+
+	
 }
 
 void printLogo () {
@@ -335,6 +344,7 @@ void printLogo () {
 	printString("   `\\__| \\___/ |__/`\r\n");
 	printString("jgs     \\(_|_)/\r\n");
 	printString("         \" ` \"\r\n");
+	printString("WELCOME TO BAD OS\r\n");
 }
 
 //Implementasi Fungsi Matematika 
