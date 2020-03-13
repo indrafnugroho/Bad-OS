@@ -20,18 +20,16 @@ int main() {
 	int suc;
 	printString("JANCOK");
 	printLogo();
-	printString("sini");
+	printString("masuk shell gak?\r\n");
 	makeInterrupt21();
-	printString("sini2");
-	interrupt(0x21, 0x4, buffer, "key.txt", &suc);
-	printString("sini3");
+	handleInterrupt21(0XFF06, "shell", 0x2000, &suc);
+	// interrupt(0x21, 0xFF << 8 | 0x6, "shell", 0x2000, &suc);
 	if (suc) {
-		interrupt(0x21,0x0, "Key : ", 0, 0);
-	 	interrupt(0x21,0x0, buffer, 0, 0);
+		printString("berhasil\r\n");
+	} else {
+		printString("gagal\r\n");
 	}
-	else {
-		interrupt(0x21, 0x6, "milestone1", 0x2000, &suc);
-	}
+	printString("huhu\r\n");
 	while (1);
 }
 
@@ -96,7 +94,6 @@ void readString(char *string) {
 		}
 	} while (input != '\r');
 	interrupt(0x10, 0xE00 + '\r', 0, 0, 0);
-
 }
 
 void readSector(char *buffer, int sector) {
@@ -112,73 +109,80 @@ void writeSector(char *buffer, int sector) {
 //baca path nya sampe ketemu / lalu taro setiap directorynya ke array of 
 
 void readFile(char *buffer, char *path, int *result, char parentIndex) {
-	char idxParent = parentIndex;
-	char files[1024];
-	int isFound = 0;
-	int isWrongName = 0;
-	// int isNameTrue;
-	int i = 0;
-	int j;
-	int k;
-	int m;
-	int h;
-	char s;
-	char sectors[512];
-	int sConv;
-	int n;
+	// Deklarasi variabel
+    char dirBuf[1024];
+    char secBuf[512];
+    int isExist, i, iter, rowSector;
+    int sectors[16];
+    // Inisialisasi variabel : Baca sektor dir (sektor 2) (sektor 1 itu map)
+    
+    
+    // copy dir.img to dirBuf
+    readSector(&secBuf, 0x101);
+    for (i = 0; i < 512; i++) {
+        dirBuf[i] = secBuf[i];
+    }
+    readSector(&secBuf, 0x102);
+    for (i = 0; i < 512; i++) {
+        dirBuf[i+512] = secBuf[i];
+    }
+    
+    isExist = 0;
+    i = 0;
+    
+    // Cari apakah nama file ada di dalam dir
+    // Potongan 32 bytes, 12 bytes file name, 20 bytes sector
+    while (isExist == 0 && i < 64) {
+        // Cek apakah pada terdapat file pada baris ke i
+        if (dirBuf[16 * i] == parentIndex) {
+            // writeLine("Same dir!");
+            if (dirBuf[16 * i + 2] != 0x0 && dirBuf[16 * i + 1] != 0xFF) {
+                int curPos = i * 16 + 2;
+                
+                // Terdapat file, cek kesamaan nama
+                int j = 0;
+                int isSame = 1;
+                // printString("\r\nFile found with name : \0");
+                // printString(dirBuf + 16 * i + 2);
+                // printString(" <====> \0");
+                // printString(filename);
+                // printString("\r\n\0");
+                while (isSame == 1 && j < 14) {
+                    if (dirBuf[j + curPos] != path[j]) {
+                        isSame = 0;
+                    } else if (dirBuf[j + curPos] == '\0' && path[j] == '\0') {
+                        j = 13;
+                    }
+                    j++;
+                }
 
-
-	readSector(files, 257);
-	readSector(files + 512, 258);
-	while(!isFound) {
-		j = i;
-		// isNameTrue = 0;
-		while (path[i] != '/' && path[i] != '\0') {
-			i++;
-		}
-		//finding nemo
-		
-		//search for parent idx with matching path name
-		for (k=0; k < 1024; k+=16) {
-			if (files[k] == idxParent) {
-				m = k+2;				//matching name
-				
-				for (h=0; h < i-j-1; h++) {
-					if (path[j+h] != files[m+h]) {
-						break;
-					}
-				} if (h == i-j-1) {
-					// isNameTrue = 1;
-					idxParent = k; //in hexa gengs
-					break;
-				}
-			}
-		}
-		if (k==1024) break; // break while terluar
-		
-		if (path[i] == '/') {
-			i++;
-		} else {
-			isFound = 1;
-		}
-	}
-
-	if (!isFound) *result = -1;
-	else {
-		//convert idxparent ke int dulu
-		// int pConv = convertHexToInt(idxParent);
-		s = files[idxParent + 1];
-		
-		readSector(sectors,259);
-		//convert s to int dulu
-		sConv = s; //ini belum ya gengs
-		n = 0;
-		while (sectors[sConv + n] != '\0') {
-			buffer[n] = sectors[sConv+n];
-			n++;
-		}
-		*result = 1; //ini masih sementara
-	}
+                if (isSame) {
+                    // printString("Same!\r\n\0");
+                    isExist = 1;
+                    rowSector = dirBuf[i * 16 + 1];
+                    // if (dirBuf[i * 16 + 1] == 0x15) { writeLine("On sector 21"); }
+                }
+            }
+        }
+        
+        i++;
+    }
+    if (isExist) {
+        readSector(&secBuf, 0x103);
+        iter = 0;
+        // if (rowSector == 0x15) { writeLine("On sector 21"); }
+        while (iter < 16 && secBuf[rowSector * 16 + iter] != '\0') {
+            char tempBuff[512];
+            readSector(&tempBuff, secBuf[rowSector * 16 + iter]);
+            for (i = 0; i < 512; i++) {
+                buffer[i + 512*iter] = tempBuff[i];
+            }
+            iter++;
+        }
+        *result = 1;
+    } else {
+        *result = -1;
+    }
 }
 
 void clear(char *buffer, int length) { //Fungsi untuk mengisi buffer dengan 0
@@ -378,17 +382,21 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 // }
 
 void executeProgram(char *filename, int segment, int *success) {
-	char buffer[16 * 512];
+	char bufferFile[512 * 16];
 	int i;
-	readFile(&buffer, filename, success, 0xFF);
+	
+	readFile(&bufferFile, filename, success, 0xFF);
 	if (*success) {
-		for (i=0; i<20 * 512; i++) {
-			putInMemory(segment, i, buffer[i]);
+		interrupt(0x21, 0, "File exist!\r\n", 0, 0);
+		for (i=0; i<512 * 16; i++) {
+			putInMemory(segment, i, bufferFile[i]);
 		}
 		launchProgram(segment);
 	} else {
 		interrupt(0x21, 0, "File doesn't exist!", 0, 0);
 	}
+
+	
 }
 
 void printLogo () {
@@ -399,6 +407,7 @@ void printLogo () {
 	printString("   `\\__| \\___/ |__/`\r\n");
 	printString("jgs     \\(_|_)/\r\n");
 	printString("         \" ` \"\r\n");
+	printString("WELCOME TO BAD OS\r\n");
 }
 
 //Implementasi Fungsi Matematika 
