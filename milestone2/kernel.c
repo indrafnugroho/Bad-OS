@@ -16,11 +16,15 @@ int div(int a,int b); //done
 
 //Main Function
 int main() {
-	char buffer[512 * 20];
+	char buffer[512 * 16];
 	int suc;
+	printString("JANCOK");
 	printLogo();
+	printString("sini");
 	makeInterrupt21();
+	printString("sini2");
 	interrupt(0x21, 0x4, buffer, "key.txt", &suc);
+	printString("sini3");
 	if (suc) {
 		interrupt(0x21,0x0, "Key : ", 0, 0);
 	 	interrupt(0x21,0x0, buffer, 0, 0);
@@ -57,7 +61,7 @@ void handleInterrupt21 (int AX, int BX, int CX, int DX) {
 			break;
 		case 0x06:
 			executeProgram(BX, CX, DX, AH);
-			Break;
+			break;
 		default:
 			printString("Invalid interrupt");
 	}
@@ -110,13 +114,22 @@ void writeSector(char *buffer, int sector) {
 void readFile(char *buffer, char *path, int *result, char parentIndex) {
 	char idxParent = parentIndex;
 	char files[1024];
-	readSector(files, 257);
-	
 	int isFound = 0;
 	int isWrongName = 0;
 	// int isNameTrue;
 	int i = 0;
 	int j;
+	int k;
+	int m;
+	int h;
+	char s;
+	char sectors[512];
+	int sConv;
+	int n;
+
+
+	readSector(files, 257);
+	readSector(files + 512, 258);
 	while(!isFound) {
 		j = i;
 		// isNameTrue = 0;
@@ -124,13 +137,12 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
 			i++;
 		}
 		//finding nemo
-		int k;
+		
 		//search for parent idx with matching path name
 		for (k=0; k < 1024; k+=16) {
 			if (files[k] == idxParent) {
-				int m = k+2;
-				//matching name
-				int h;
+				m = k+2;				//matching name
+				
 				for (h=0; h < i-j-1; h++) {
 					if (path[j+h] != files[m+h]) {
 						break;
@@ -154,13 +166,13 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
 	if (!isFound) *result = -1;
 	else {
 		//convert idxparent ke int dulu
-		int pConv = convertHexToInt(idxParent);
-		char s = files[pConv + 1];
-		char sectors[512];
+		// int pConv = convertHexToInt(idxParent);
+		s = files[idxParent + 1];
+		
 		readSector(sectors,259);
 		//convert s to int dulu
-		int sConv = convertHexToInt(s); //ini belum ya gengs
-		int n = 0;
+		sConv = s; //ini belum ya gengs
+		n = 0;
 		while (sectors[sConv + n] != '\0') {
 			buffer[n] = sectors[sConv+n];
 			n++;
@@ -181,12 +193,16 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 	char files[1024];
 	int i, countSector;
 	char idxParent = parentIndex;
+	int entryIndex;
+	int isFound, isNameAlreadyExists, j, k, h, m, isNameTrue, n;
+	int emptySector;
+	char bufferSector[512];
 
 	// Baca sektor di map cukup apa nggak
 	readSector(map, 0x100);
-	for (i = 0, countSector = 0; i < 256 && sectorCount < *sectors; i++) {
+	for (i = 0, countSector = 0; i < 256 && countSector < *sectors; i++) {
 		if (map[i] == 0x00) {
-			sectorCount++:
+			countSector++;
 		}
 	}
 
@@ -198,6 +214,7 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 
 	// Mencari entry yang kosong pada files
 	readSector(files, 0x101);
+	readSector(files, 0x102);
 	for (entryIndex = 0; entryIndex < 1024; entryIndex += 16) {
 		if (files[entryIndex] == '\0') {
 			break;
@@ -214,10 +231,10 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 	// Misal abc/def/g, looping sampe dapet g.
 	// def simpen di variabel, misalnya x
 
-	int isFound = 0;
-	int isNameAlreadyExists = 1;
-	int i = 0;
-	int j = 0;
+	isFound = 0;
+	isNameAlreadyExists = 1;
+	i = 0;
+	j = 0;
 	while (!isFound) {
 		j = i;
 		// isNameTrue = 0;
@@ -226,7 +243,7 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 		}
 
 		//finding nemo
-		int k;
+		k;
 		if (path[i] == '\0') {
 			// Kalo udah di file terakhir (paling ujung gaada / lagi), cek ada yang namanya sama gak
 			isFound = 1;
@@ -234,9 +251,9 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 			//search for parent idx with matching path name
 			for (k=0; k < 1024; k+=16) {
 				if (files[k] == idxParent) {
-					int m = k+2;
+					m = k+2;
 					//matching name
-					int h;
+					h;
 					for (h=0; h < i-j-1; h++) {
 						if (path[j+h] != files[m+h]) {
 							break;
@@ -253,9 +270,9 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 			//search for parent idx with matching path name
 			for (k=0; k < 1024; k+=16) {
 				if (files[k] == idxParent) {
-					int m = k+2;
+					m = k+2;
 					//matching name
-					int h;
+					h;
 					for (h=0; h < i-j-1; h++) {
 						if (path[j+h] != files[m+h]) {
 							break;
@@ -280,24 +297,21 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 		*sectors = 2;
 		return;
 	} else {
-		char entryName[i -j];
-		for (int n = 0; k < i - j; k++) {
-			char entryName = path[i - j + k];
-		}
-		files[entryIndex] = idxParent;
-		int emptySector;
-		char bufferSector;
-		for (emptySector = 0, sectorCount = 0; emptySector < 256 && sectorCount < *sectors; i++, sectorCount++) {
-			if (map[emptySector] = 0x00) {
-				map[emptySector] = 0xFF;
-				clear(bufferSector, 512);
-				for (int n = 0; n < 512; n++) {
-					bufferSector[n] = buffer[sectorCount * 512 + n];
-				}
-				writeSector(bufferSector, emptySector);
+		readSector(bufferSector, 0x103);
+		emptySector = 0;
+
+		while (emptySector < 16 && bufferSector[(idxParent + 1) * 16 + emptySector] != '\0') {
+			char buffTemp[512];
+			readSector(&buffTemp, bufferSector[(idxParent + 1) * 16 + emptySector]);
+			for (i = 0; i < 512; i++) {
+				buffer[i + 512 * emptySector] = buffTemp[i];
 			}
+			emptySector++;
 		}
+
+		*sectors = 1;
 	}
+
 
 
 	
@@ -364,14 +378,16 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 // }
 
 void executeProgram(char *filename, int segment, int *success) {
-	char buffer[20 * 512];
+	char buffer[16 * 512];
 	int i;
-	readFile(buffer, filename, success);
+	readFile(&buffer, filename, success, 0xFF);
 	if (*success) {
 		for (i=0; i<20 * 512; i++) {
 			putInMemory(segment, i, buffer[i]);
 		}
 		launchProgram(segment);
+	} else {
+		interrupt(0x21, 0, "File doesn't exist!", 0, 0);
 	}
 }
 
