@@ -198,16 +198,21 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 
 	// Mencari entry yang kosong pada files
 	readSector(files, 0x101);
-	for (i = 0; i < 1024; i += 16) {
-		if (files[i] == '\0') {
+	for (entryIndex = 0; entryIndex < 1024; entryIndex += 16) {
+		if (files[entryIndex] == '\0') {
 			break;
 		}
 	}
 
 	// Apabila tidak ada entry yang kosong
-	if (i == 1024) {
+	if (entryIndex == 1024) {
 		*sectors = -3;
 	}
+
+
+	// Sama kayak di readfile, pake while sampe gaada / lagi (file paling ujung)
+	// Misal abc/def/g, looping sampe dapet g.
+	// def simpen di variabel, misalnya x
 
 	int isFound = 0;
 	int isNameAlreadyExists = 1;
@@ -223,6 +228,7 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 		//finding nemo
 		int k;
 		if (path[i] == '\0') {
+			// Kalo udah di file terakhir (paling ujung gaada / lagi), cek ada yang namanya sama gak
 			isFound = 1;
 
 			//search for parent idx with matching path name
@@ -270,24 +276,33 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 	if (!isFound) {
 		*sectors = -1;
 		return;
+	} else if (!isNameAlreadyExists) {
+		*sectors = 2;
+		return;
 	} else {
 		char entryName[i -j];
-		for (int k = 0; k < i - j; k++) {
+		for (int n = 0; k < i - j; k++) {
 			char entryName = path[i - j + k];
 		}
-
-
+		files[entryIndex] = idxParent;
+		int emptySector;
+		char bufferSector;
+		for (emptySector = 0, sectorCount = 0; emptySector < 256 && sectorCount < *sectors; i++, sectorCount++) {
+			if (map[emptySector] = 0x00) {
+				map[emptySector] = 0xFF;
+				clear(bufferSector, 512);
+				for (int n = 0; n < 512; n++) {
+					bufferSector[n] = buffer[sectorCount * 512 + n];
+				}
+				writeSector(bufferSector, emptySector);
+			}
+		}
 	}
 
-	// Sama kayak di readfile, pake while sampe gaada / lagi (file paling ujung)
-	// Misal abc/def/g, looping sampe dapet g.
-	// def simpen di variabel, misalnya x
 
-	// Kalo udah di file terakhir (paling ujung gaada / lagi), cek ada yang namanya sama gak
+	
 
 	// Tulis indeks parent diisi ama x
-
-	// sisanya gangerti
 }
 
 // void writeFile(char *buffer, char *filename, int *sectors) {
