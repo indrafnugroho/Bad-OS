@@ -62,11 +62,10 @@ void main(int argc, char* argv[]) {
     dir[dirindex + i + 2] = argv[1][i];
   }
 
-  dirindex = dirindex + 12; 
+  
 
   // Untuk sectors
   for (i = 0; i < 32; i++) {
-    
     if (sector[i*16] == 0) break;
   }
 
