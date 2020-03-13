@@ -128,7 +128,7 @@ void main(int argc, char* argv[]) {
   for (i = 0; i < 1024; i++) fputc(dir[i], floppy);
 
   fseek(floppy, 512 * 0x103, SEEK_SET);
-  for (i = 0; i < 512; i++) fputc(dir[i], floppy);
+  for (i = 0; i < 512; i++) fputc(sector[i], floppy);
 
   fclose(floppy);
   fclose(loadFil);

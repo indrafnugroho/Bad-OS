@@ -18,19 +18,16 @@ int div(int a,int b); //done
 int main() {
 	char buffer[512 * 16];
 	int suc;
-	printString("JANCOK");
+	readFile(&buffer, "tes.txt", &suc, 0xFF); //tes fungsi read file
+	printString("        KAMPRET\r\n");
 	printLogo();
-	printString("sini");
 	makeInterrupt21();
-	printString("sini2");
-	interrupt(0x21, 0x4, buffer, "key.txt", &suc);
-	printString("sini3");
+
 	if (suc) {
-		interrupt(0x21,0x0, "Key : ", 0, 0);
-	 	interrupt(0x21,0x0, buffer, 0, 0);
+		printString(buffer);
 	}
 	else {
-		interrupt(0x21, 0x6, "milestone1", 0x2000, &suc);
+		printString("tes gagal\r\n");
 	}
 	while (1);
 }
@@ -112,72 +109,68 @@ void writeSector(char *buffer, int sector) {
 //baca path nya sampe ketemu / lalu taro setiap directorynya ke array of 
 
 void readFile(char *buffer, char *path, int *result, char parentIndex) {
-	char idxParent = parentIndex;
 	char files[1024];
+	char tempBuffer[512];
+	char tempBuffer2[512];
 	int isFound = 0;
-	int isWrongName = 0;
-	// int isNameTrue;
-	int i = 0;
-	int j;
-	int k;
-	int m;
-	int h;
-	char s;
-	char sectors[512];
-	int sConv;
-	int n;
+	int isNameMatch, k, s, j, idxName;
+	int h, l;
 
-
-	readSector(files, 257);
-	readSector(files + 512, 258);
+	readSector(&files, 257);
+	// k=512;
+	readSector(&tempBuffer, 258);
+	for (k=512; k < 1024; k++) {
+		files[k] = tempBuffer[k-512];
+	}
+	k = 0;
 	while(!isFound) {
-		j = i;
-		// isNameTrue = 0;
-		while (path[i] != '/' && path[i] != '\0') {
-			i++;
-		}
-		//finding nemo
-		
 		//search for parent idx with matching path name
-		for (k=0; k < 1024; k+=16) {
-			if (files[k] == idxParent) {
-				m = k+2;				//matching name
-				
-				for (h=0; h < i-j-1; h++) {
-					if (path[j+h] != files[m+h]) {
+		for (k; k < 1024; k+=16) {
+			if (files[k] == parentIndex) {
+				idxName = k+2;
+				if (files[idxName] != 0x0 && files[k+1] != 0xFF) {
+					//matching name
+					isNameMatch = 1;
+					for (h=0; h < 14; h++) {
+						if (path[h] != files[idxName + h]) {
+							isNameMatch = 0;
+							break;
+						}
+					} 
+					
+					if (isNameMatch) {
+						isFound = 1;
+						s = files[k+1]; //in hexa gengs
 						break;
 					}
-				} if (h == i-j-1) {
-					// isNameTrue = 1;
-					idxParent = k; //in hexa gengs
-					break;
 				}
 			}
 		}
 		if (k==1024) break; // break while terluar
-		
-		if (path[i] == '/') {
-			i++;
-		} else {
-			isFound = 1;
-		}
 	}
 
-	if (!isFound) *result = -1;
+	if (!isFound) {
+		*result = -1;
+		// printString("ga nemu gaes\r\n");
+	}
 	else {
 		//convert idxparent ke int dulu
 		// int pConv = convertHexToInt(idxParent);
-		s = files[idxParent + 1];
+		// s = files[idxParent + 1];
 		
-		readSector(sectors,259);
+		readSector(&tempBuffer,259);
 		//convert s to int dulu
-		sConv = s; //ini belum ya gengs
-		n = 0;
-		while (sectors[sConv + n] != '\0') {
-			buffer[n] = sectors[sConv+n];
-			n++;
+		//sConv = s; //ini belum ya gengs
+		j = 0;
+		while (j < 16 && tempBuffer[s*16 + j] != '\0') {
+			readSector(&tempBuffer2, tempBuffer[s*16 + j]);
+			for (l=0; l < 512; l++) {
+				buffer[l + 512*j] = tempBuffer2[l];
+			}
+			j++;
 		}
-		*result = 1; //ini masih sementara
+		*result = 1; //ini kayanya fix
+		// printString("ini bisa gaes\r\n");
 	}
 }
 
@@ -311,71 +304,8 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 
 		*sectors = 1;
 	}
-
-
-
-	
-
 	// Tulis indeks parent diisi ama x
 }
-
-// void writeFile(char *buffer, char *filename, int *sectors) {
-// 	char map[512];
-// 	char dir[512];
-// 	char sectorBuffer[512];
-// 	int dirIndex;
-
-// 	readSector(map, 1);
-// 	readSector(dir, 2);
-
-// 	for (dirIndex = 0; dirIndex < 16; ++dirIndex) {
-// 		if (dir[dirIndex * 32] == '\0') {
-// 			break;
-// 		}
-// 	}
-// 	if (dirIndex < 16) {
-// 		int i, j, sectorCount;
-// 		for (i = 0, sectorCount = 0; i < 256 && sectorCount < *sectors; ++i) {
-// 			if (map[i] == 0x00) {
-// 				++sectorCount;
-// 			}
-// 		}
-// 		if (sectorCount < *sectors) {
-// 			*sectors = 0; //insufficient
-// 			return;
-// 		}
-// 		else {
-// 			clear(dir + dirIndex * 32, 32);
-// 			for (i = 0; i < 12; ++i) {
-// 				if (filename[i] != '\0') {
-// 					dir[dirIndex * 32 + i] = filename[i];
-// 				}
-// 				else {
-// 					break;
-// 				}
-// 			}
-// 			for (i = 0, sectorCount = 0; i < 256 && sectorCount < *sectors; ++i) {
-// 				if (map[i] == 0x00) {
-// 					map[i] = 0xFF;
-// 					dir[dirIndex * 32 + 12 + sectorCount] = i;
-// 					clear(sectorBuffer, 512);
-// 					for (j = 0; j < 512; ++j) {
-// 						sectorBuffer[j] = buffer[sectorCount * 512 + j];
-// 					}
-// 					writeSector(sectorBuffer, i);
-// 					++sectorCount;
-// 				}
-// 			}
-// 		}	
-// 	}
-// 	else {
-// 		*sectors = -1; //insufficient dir entries
-// 		return;
-// 	}
-	
-// 	writeSector(map, 1);
-// 	writeSector(dir, 2);
-// }
 
 void executeProgram(char *filename, int segment, int *success) {
 	char buffer[16 * 512];
