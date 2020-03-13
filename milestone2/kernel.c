@@ -57,7 +57,7 @@ void handleInterrupt21 (int AX, int BX, int CX, int DX) {
 			break;
 		case 0x06:
 			executeProgram(BX, CX, DX, AH);
-			Break;
+			break;
 		default:
 			printString("Invalid interrupt");
 	}
@@ -110,13 +110,23 @@ void writeSector(char *buffer, int sector) {
 void readFile(char *buffer, char *path, int *result, char parentIndex) {
 	char idxParent = parentIndex;
 	char files[1024];
-	readSector(files, 257);
-	
+	char tempSector[512];
+	char sectors[512];
+	char s;
 	int isFound = 0;
 	int isWrongName = 0;
 	// int isNameTrue;
 	int i = 0;
-	int j;
+	int j, k, m, n, h;
+	
+	
+	readSector(files, 0x101); //add files from sector 0x101
+	//add files from sector 0x102
+	readSector(tempSector, 0x102);
+	for (int idx=512; idx < 1024; idx++) {
+		files[idx] = tempSector[idx-512];
+	}
+	
 	while(!isFound) {
 		j = i;
 		// isNameTrue = 0;
@@ -124,13 +134,11 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
 			i++;
 		}
 		//finding nemo
-		int k;
 		//search for parent idx with matching path name
 		for (k=0; k < 1024; k+=16) {
 			if (files[k] == idxParent) {
-				int m = k+2;
+				m = k+2;
 				//matching name
-				int h;
 				for (h=0; h < i-j-1; h++) {
 					if (path[j+h] != files[m+h]) {
 						break;
@@ -154,15 +162,14 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
 	if (!isFound) *result = -1;
 	else {
 		//convert idxparent ke int dulu
-		int pConv = convertHexToInt(idxParent);
-		char s = files[pConv + 1];
-		char sectors[512];
+		// int pConv = convertHexToInt(idxParent);
+		char s = files[idxParent + 1];
 		readSector(sectors,259);
 		//convert s to int dulu
-		int sConv = convertHexToInt(s); //ini belum ya gengs
-		int n = 0;
-		while (sectors[sConv + n] != '\0') {
-			buffer[n] = sectors[sConv+n];
+		// int sConv = convertHexToInt(s); //ini belum ya gengs
+		n = 0;
+		while (sectors[s + n] != '\0') {
+			buffer[n] = sectors[s+n];
 			n++;
 		}
 		*result = 1; //ini masih sementara
@@ -179,14 +186,14 @@ void clear(char *buffer, int length) { //Fungsi untuk mengisi buffer dengan 0
 void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 	char map[512];
 	char files[1024];
-	int i, countSector;
+	int i, countSector, entryIndex;
 	char idxParent = parentIndex;
 
 	// Baca sektor di map cukup apa nggak
 	readSector(map, 0x100);
-	for (i = 0, countSector = 0; i < 256 && sectorCount < *sectors; i++) {
-		if (map[i] == 0x00) {
-			sectorCount++:
+	for (i = 0, countSector = 0; i < 256 && countSector < *sectors; i++) {
+		if (msectorCountap[i] == 0x00) {
+			countSector++;
 		}
 	}
 
