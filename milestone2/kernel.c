@@ -18,7 +18,7 @@ int div(int a,int b); //done
 int main() {
 	char buffer[512 * 16];
 	int suc;
-	printString("       KAMPRET\r\n");
+	printString("JANCOK");
 	printLogo();
 	printString("masuk shell gak?\r\n");
 	makeInterrupt21();
@@ -109,75 +109,82 @@ void writeSector(char *buffer, int sector) {
 //baca path nya sampe ketemu / lalu taro setiap directorynya ke array of 
 
 void readFile(char *buffer, char *path, int *result, char parentIndex) {
-	char files[1024];
-	char tempBuffer[512];
-	char tempBuffer2[512];
-	int isFound = 0;
-	int isNameMatch, k, s, idxName;
-	int h, l;
-	int j = 0;
-	int sectorSize = 512;
+	// Deklarasi variabel
+    char dirBuf[1024];
+    char secBuf[512];
+    int isExist, i, iter, rowSector;
+    int sectors[16];
+    // Inisialisasi variabel : Baca sektor dir (sektor 2) (sektor 1 itu map)
+    
+    
+    // copy dir.img to dirBuf
+    readSector(&secBuf, 0x101);
+    for (i = 0; i < 512; i++) {
+        dirBuf[i] = secBuf[i];
+    }
+    readSector(&secBuf, 0x102);
+    for (i = 0; i < 512; i++) {
+        dirBuf[i+512] = secBuf[i];
+    }
+    
+    isExist = 0;
+    i = 0;
+    
+    // Cari apakah nama file ada di dalam dir
+    // Potongan 32 bytes, 12 bytes file name, 20 bytes sector
+    while (isExist == 0 && i < 64) {
+        // Cek apakah pada terdapat file pada baris ke i
+        if (dirBuf[16 * i] == parentIndex) {
+            // writeLine("Same dir!");
+            if (dirBuf[16 * i + 2] != 0x0 && dirBuf[16 * i + 1] != 0xFF) {
+                int curPos = i * 16 + 2;
+                
+                // Terdapat file, cek kesamaan nama
+                int j = 0;
+                int isSame = 1;
+                // printString("\r\nFile found with name : \0");
+                // printString(dirBuf + 16 * i + 2);
+                // printString(" <====> \0");
+                // printString(filename);
+                // printString("\r\n\0");
+                while (isSame == 1 && j < 14) {
+                    if (dirBuf[j + curPos] != path[j]) {
+                        isSame = 0;
+                    } else if (dirBuf[j + curPos] == '\0' && path[j] == '\0') {
+                        j = 13;
+                    }
+                    j++;
+                }
 
-	readSector(&files, 257);
-	// k=512;
-	readSector(&tempBuffer, 258);
-	for (k=sectorSize; k < sectorSize*2; k++) {
-		files[k] = tempBuffer[k-512];
-	}
-	k = 0;
-	while(!isFound) {
-		//search for parent idx with matching path name
-		for (k; k < sectorSize*2; k+=16) {
-			if (files[k] == parentIndex) {
-				if (files[k+2] != 0x0 && files[k+1] != 0xFF) {
-					idxName = k+2;
-					//matching name
-					isNameMatch = 1;
-					for (h=0; h < 14; h++) {
-						if (path[h] != files[idxName + h]) {
-							isNameMatch = 0;
-							break;
-						}
-						else if (files[idxName + h] == '\0' && path[j] == '\0') {
-                        	break;
-                    	}
-					} 
-					if (isNameMatch) {
-						isFound = 1;
-						s = files[k+1]; //in hexa gengs
-					}
-				}
-			}
-
-			if (isFound) {
-				break;
-			}
-		}
-		if (k==sectorSize*2) {
-			break;
-		}  // break while terluar
-	}
-
-	if (!isFound) {
-		*result = -1;
-		// printString("ga nemu gaes\r\n");
-	}
-	else {
-		//convert idxparent ke int dulu
-		// int pConv = convertHexToInt(idxParent);
-		// s = files[idxParent + 1];
-		readSector(&tempBuffer,259);
-		//convert s to int dulu
-		//sConv = s; //ini belum ya gengs
-		while ((j<16)&&(tempBuffer[j+s*16]!='\0')) {
-			readSector(&tempBuffer2, tempBuffer[j + s*16]);
-			for(l=0;l<sectorSize;++l) {
-				buffer[sectorSize*j+l] = tempBuffer2[l];
-			} ++j;
-		} *result = 1; //ini kayanya fix
-		// printString("ini bisa gaes\r\n");
-	}
+                if (isSame) {
+                    // printString("Same!\r\n\0");
+                    isExist = 1;
+                    rowSector = dirBuf[i * 16 + 1];
+                    // if (dirBuf[i * 16 + 1] == 0x15) { writeLine("On sector 21"); }
+                }
+            }
+        }
+        
+        i++;
+    }
+    if (isExist) {
+        readSector(&secBuf, 0x103);
+        iter = 0;
+        // if (rowSector == 0x15) { writeLine("On sector 21"); }
+        while (iter < 16 && secBuf[rowSector * 16 + iter] != '\0') {
+            char tempBuff[512];
+            readSector(&tempBuff, secBuf[rowSector * 16 + iter]);
+            for (i = 0; i < 512; i++) {
+                buffer[i + 512*iter] = tempBuff[i];
+            }
+            iter++;
+        }
+        *result = 1;
+    } else {
+        *result = -1;
+    }
 }
+
 void clear(char *buffer, int length) { //Fungsi untuk mengisi buffer dengan 0
 	int i;
 	for(i = 0; i < length; ++i){
@@ -316,6 +323,63 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 	// Tulis indeks parent diisi ama x
 }
 
+// void writeFile(char *buffer, char *filename, int *sectors) {
+// 	char map[512];
+// 	char dir[512];
+// 	char sectorBuffer[512];
+// 	int dirIndex;
+
+// 	readSector(map, 1);
+// 	readSector(dir, 2);
+
+// 	for (dirIndex = 0; dirIndex < 16; ++dirIndex) {
+// 		if (dir[dirIndex * 32] == '\0') {
+// 			break;
+// 		}
+// 	}
+// 	if (dirIndex < 16) {
+// 		int i, j, sectorCount;
+// 		for (i = 0, sectorCount = 0; i < 256 && sectorCount < *sectors; ++i) {
+// 			if (map[i] == 0x00) {
+// 				++sectorCount;
+// 			}
+// 		}
+// 		if (sectorCount < *sectors) {
+// 			*sectors = 0; //insufficient
+// 			return;
+// 		}
+// 		else {
+// 			clear(dir + dirIndex * 32, 32);
+// 			for (i = 0; i < 12; ++i) {
+// 				if (filename[i] != '\0') {
+// 					dir[dirIndex * 32 + i] = filename[i];
+// 				}
+// 				else {
+// 					break;
+// 				}
+// 			}
+// 			for (i = 0, sectorCount = 0; i < 256 && sectorCount < *sectors; ++i) {
+// 				if (map[i] == 0x00) {
+// 					map[i] = 0xFF;
+// 					dir[dirIndex * 32 + 12 + sectorCount] = i;
+// 					clear(sectorBuffer, 512);
+// 					for (j = 0; j < 512; ++j) {
+// 						sectorBuffer[j] = buffer[sectorCount * 512 + j];
+// 					}
+// 					writeSector(sectorBuffer, i);
+// 					++sectorCount;
+// 				}
+// 			}
+// 		}	
+// 	}
+// 	else {
+// 		*sectors = -1; //insufficient dir entries
+// 		return;
+// 	}
+	
+// 	writeSector(map, 1);
+// 	writeSector(dir, 2);
+// }
 
 void executeProgram(char *filename, int segment, int *success) {
 	char bufferFile[512 * 16];
@@ -327,7 +391,9 @@ void executeProgram(char *filename, int segment, int *success) {
 		for (i=0; i<512 * 16; i++) {
 			putInMemory(segment, i, bufferFile[i]);
 		}
+		interrupt(0x21, 0, "Ke sini nyampe bro!\r\n", 0, 0);
 		launchProgram(segment);
+		interrupt(0x21, 0, "Ke sini nyampe juga bro!\r\n", 0, 0);
 	} else {
 		interrupt(0x21, 0, "File doesn't exist!", 0, 0);
 	}
