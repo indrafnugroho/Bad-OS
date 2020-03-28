@@ -2,7 +2,6 @@ int compareStr(char* strA, char* strB);
 char searchForPath(char* path, char parentIndex);
 char* searchName(char parentIndex);
 
-
 int main() {
 	char curdir;
 	char* input;
@@ -23,8 +22,6 @@ int main() {
 		curdir = searchForPath(&input, 0xFF);
 		interrupt(0x21, 0x00, curdir, 0, 0);
 		interrupt(0x21, 0x00, "\r\n", 0, 0);
-
-		
 	}
 
 	return 0;
@@ -53,16 +50,17 @@ char searchForPath(char* path, char parentIndex) {
 	for (k=512; k < 1024; k++) {
 		files[k] = tempBuffer[k-512];
 	}
+	
 	k = 0;
-	while(!isFound) {
+	while(!isFound && k < 1024) {
 		//search for parent idx with matching path name
-		for (k; k < 1024; k+=16) {
+		for (k = 0; k < 1024; k += 16) {
 			if (files[k] == parentIndex) {
-				idxName = k+2;
-				if (files[idxName] != 0x0 && files[k+1] != 0xFF) {
+				idxName = k + 2;
+				if (files[idxName] != 0x0 && files[k + 1] != 0xFF) {
 					//matching name
 					isNameMatch = 1;
-					for (h=0; h < 14; h++) {
+					for (h = 0; h < 14; h++) {
 						if (path[h] != files[idxName + h]) {
 							isNameMatch = 0;
 							break;
@@ -71,13 +69,12 @@ char searchForPath(char* path, char parentIndex) {
 					
 					if (isNameMatch) {
 						isFound = 1;
-						s = files[k+1]; //in hexa gengs
+						s = files[k + 1]; //in hexa gengs
 						break;
 					}
 				}
 			}
 		}
-		if (k==1024) break; // break while terluar
 	}
 
 	if (!isFound) {
