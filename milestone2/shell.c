@@ -1,21 +1,28 @@
+int compareStr(char* strA, char* strB);
+char searchForPath(char* path, char parentIndex);
+char* searchName(char parentIndex);
+
+
 int main() {
-	char curdir = 0xFF;
+	char curdir;
 	char* input;
 
+	curdir = 0xFF;
 	while (1) {
 		do {
 			if (curdir = 0XFF) {
 				interrupt(0x21, 0x00, "Root", 0, 0);
 			} else {
-
+				interrupt(0x21, 0x00, "Kenapa ini\r\n", 0, 0);
 			}
 			interrupt(0x21, 0x00, ">", 0, 0);
 			interrupt(0x21, 0x01, input, 1, 0);
 		} while (compareStr(input, ""));
 
-		interrupt(0x21, 0x00, "lewat\r\n", 0, 0);
-		interrupt(0x21, 0x00, input, 0, 0);
+		interrupt(0x21, 0x00, "\r\n", 0, 0);
 		curdir = searchForPath(&input, 0xFF);
+		interrupt(0x21, 0x00, curdir, 0, 0);
+		interrupt(0x21, 0x00, "\r\n", 0, 0);
 
 		
 	}
