@@ -119,45 +119,40 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
 	int sectorSize = 512;
 
 	readSector(&files, 257);
-	// k=512;
 	readSector(&tempBuffer, 258);
-	for (k=sectorSize; k < sectorSize*2; k++) {
+	for (k = sectorSize; k < sectorSize * 2; k++) {
 		files[k] = tempBuffer[k-512];
 	}
+	
 	k = 0;
-	while(!isFound) {
-		//search for parent idx with matching path name
-		for (k; k < sectorSize*2; k+=16) {
+	while (!isFound && k < sectorSize * 2) {
+        // Search for parent idx w/ matching path name
+        for (k = 0; k < sectorSize * 2; k += 16) {
 			if (files[k] == parentIndex) {
-				if (files[k+2] != 0x0 && files[k+1] != 0xFF) {
-					idxName = k+2;
-					//matching name
-					isNameMatch = 1;
-					for (h=0; h < 14; h++) {
-						if (path[h] != files[idxName + h]) {
-							isNameMatch = 0;
+            	if (files[k + 1] != 0xFF && files[k + 2] != 0x0) {
+                	idxName = k + 2;
+                
+                	//matching name
+                	isNameMatch = 1;
+	                for (h = 0; h < 14; h++) {
+    	                if (path[h] != files[h + idxName]) {
+        	                isNameMatch = 0;
 							break;
-						}
-						else if (files[idxName + h] == '\0' && path[j] == '\0') {
-                        	break;
+                	    } else if (files[h + idxName] == '\0' && path[h] == '\0') {
+                    		break;
                     	}
-					} 
-					if (isNameMatch) {
-						isFound = 1;
-						s = files[k+1]; //in hexa gengs
-					}
-				}
-			}
+                	}
 
-			if (isFound) {
-				break;
-			}
+                	if (isNameMatch) {
+                    	isFound = 1;
+                    	s = files[k + 1];
+						break;
+                	}
+            	}
+        	}
 		}
-		if (k==sectorSize*2) {
-			break;
-		}  // break while terluar
-	}
-
+    }
+	
 	if (!isFound) {
 		*result = -1;
 		// printString("ga nemu gaes\r\n");
@@ -169,15 +164,16 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
 		readSector(&tempBuffer,259);
 		//convert s to int dulu
 		//sConv = s; //ini belum ya gengs
-		while ((j<16)&&(tempBuffer[j+s*16]!='\0')) {
-			readSector(&tempBuffer2, tempBuffer[j + s*16]);
-			for(l=0;l<sectorSize;++l) {
-				buffer[sectorSize*j+l] = tempBuffer2[l];
+		while ((j < 16) && (tempBuffer[j + s * 16] != '\0')) {
+			readSector(&tempBuffer2, tempBuffer[j + s * 16]);
+			for(l = 0; l < sectorSize; ++l) {
+				buffer[sectorSize * j + l] = tempBuffer2[l];
 			} ++j;
 		} *result = 1; //ini kayanya fix
 		// printString("ini bisa gaes\r\n");
 	}
 }
+
 void clear(char *buffer, int length) { //Fungsi untuk mengisi buffer dengan 0
 	int i;
 	for(i = 0; i < length; ++i){
