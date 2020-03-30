@@ -16,5 +16,7 @@ nasm -f as86 lib.asm -o lib_asm.o
 ld86 -o shell -d shell.o lib_asm.o
 gcc loadFile.c -o loadFile
 ./loadFile shell FF
+./loadFile tes.txt FF
+./loadFile abcd.txt FF
 
 echo c | bochs -f if2230.config
