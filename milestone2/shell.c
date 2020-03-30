@@ -3,7 +3,6 @@ int compareStr(char* strA, char* strB);
 char searchForPath(char* path, char parentIndex);
 char* searchName(char parentIndex);
 
-
 int main() {
 	char curdir;
 	char* input;

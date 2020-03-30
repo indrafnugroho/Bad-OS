@@ -20,7 +20,7 @@ int main() {
 	int suc;
 	printString("JANCOK");
 	printLogo();
-	printString("masuk shell gak?\r\n");
+	// printString("masuk shell gak?\r\n");
 	makeInterrupt21();
 	handleInterrupt21(0XFF06, "shell", 0x2000, &suc);
 	// interrupt(0x21, 0xFF << 8 | 0x6, "shell", 0x2000, &suc);
@@ -158,12 +158,7 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
 		// printString("ga nemu gaes\r\n");
 	}
 	else {
-		//convert idxparent ke int dulu
-		// int pConv = convertHexToInt(idxParent);
-		// s = files[idxParent + 1];
 		readSector(&tempBuffer,259);
-		//convert s to int dulu
-		//sConv = s; //ini belum ya gengs
 		while ((j < 16) && (tempBuffer[j + s * 16] != '\0')) {
 			readSector(&tempBuffer2, tempBuffer[j + s * 16]);
 			for(l = 0; l < sectorSize; ++l) {
@@ -376,7 +371,7 @@ void executeProgram(char *filename, int segment, int *success) {
 	
 	readFile(&bufferFile, filename, success, 0xFF);
 	if (*success) {
-		interrupt(0x21, 0, "File exist!\r\n", 0, 0);
+		interrupt(0x21, 0, "File exists!\r\n", 0, 0);
 		for (i=0; i<512 * 16; i++) {
 			putInMemory(segment, i, bufferFile[i]);
 		}
