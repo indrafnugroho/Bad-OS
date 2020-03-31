@@ -1,3 +1,21 @@
+# Ignore vscode config
+.vscode
+
 # Ignore .img 
 *.img
 *.o
+
+bochsout.txt
+
+bootloader
+!bootloader.asm
+
+kernel
+!kernel.asm
+!kernel.c
+
+loadFile
+!loadFile.c
+
+shell
+!shell.c
