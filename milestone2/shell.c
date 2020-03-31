@@ -1,4 +1,5 @@
 void ls(char parentIndex);
+void cat(char parentIndex);
 int compareStr(char* strA, char* strB);
 char searchForPath(char* path, char parentIndex);
 char* searchName(char parentIndex);
@@ -11,16 +12,20 @@ int main() {
 	while (1) {
 		do {
 			if (curdir == 0XFF) {
-				interrupt(0x21, 0x00, "Root", 0, 0);
+				interrupt(0x21, 0x00, "Root\0", 0, 0);
 			} else {
 				interrupt(0x21, 0x00, "Kenapa ini\r\n", 0, 0);
 			}
-			interrupt(0x21, 0x00, ">", 0, 0);
+			interrupt(0x21, 0x00, "> \0", 0, 0);
 			interrupt(0x21, 0x01, input, 1, 0);
 		} while (compareStr(input, ""));
-		interrupt(0x21, 0x00, "\r\n", 0, 0);
-		ls(0xFF);
+		interrupt(0x21, 0x00, "\r\n\0", 0, 0);
 		
+		if (compareStr(input, "cat")) {
+			cat(0xFF);
+		} else if (compareStr(input, "ls")) {
+			ls(0xFF);
+		}
 	}
 
 	return 0;
@@ -41,9 +46,40 @@ void ls(char parentIndex) {
 				interrupt(0x10, 0xE00 + files[h + idxName], 0, 0, 0);
 				h++;
 			}
-			interrupt(0x21, 0x00, "\r\n", 0, 0);
+			interrupt(0x21, 0x00, "\r\n\0", 0, 0);
 		}
 		k++;
+	}
+}
+
+void cat(char parentIndex) {
+	char fileName[14], fileContent[512 * 16];
+	int isSuccess, i;
+	isSuccess = 0;
+
+	//empty Buffer
+	for (i = 0; i < 14; i++) {
+		fileName[i] = 0x0;
+	}
+	
+	for (i = 0; i < 512 * 16; i++) {
+		fileContent[i] = 0x0;
+	}
+	
+	//read input filename
+	interrupt(0x21, 0, "Input filename: \0", 0, 0);
+	interrupt(0x21, 1, &fileName, 0, 0);
+	interrupt(0x21, 0, "\r\n\0", 0, 0);
+
+	//read fileContent
+	interrupt(0x21, (parentIndex << 8) | 0x04, &fileContent, &fileName, &isSuccess);
+
+	if (isSuccess == 1) {
+		interrupt(0x21, 0, "File content: \r\n\0", 0, 0);
+		interrupt(0x21, 0, &fileContent, 0, 0);
+		interrupt(0x21, 0, "\r\n\0", 0, 0);
+	} else {
+		interrupt(0x21, 0, "File not found\r\n\0", 0, 0);
 	}
 }
 
