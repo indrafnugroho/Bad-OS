@@ -57,7 +57,7 @@ void handleInterrupt21 (int AX, int BX, int CX, int DX) {
 			break;
 		case 0x06:
 			executeProgram(BX, CX, DX, AH);
-			Break;
+			break;
 		default:
 			printString("Invalid interrupt");
 	}
