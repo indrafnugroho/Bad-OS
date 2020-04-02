@@ -1,5 +1,8 @@
 void ls(char parentIndex);
+<<<<<<< HEAD
 void execProg(char* progName, char parentIndex);
+=======
+>>>>>>> 0aba1c78cc190a890a069b6f927955c2a54640eb
 void cat(char parentIndex);
 int compareStr(char* strA, char* strB);
 int compareStrN(char* strA, char* strB, int n);
