@@ -18,18 +18,15 @@ int div(int a,int b); //done
 int main() {
 	char buffer[512 * 16];
 	int suc;
-	printString("JANCOK");
+	char file[512 * 16];
 	printLogo();
-	// printString("masuk shell gak?\r\n");
 	makeInterrupt21();
 	handleInterrupt21(0XFF06, "shell", 0x2000, &suc);
-	// interrupt(0x21, 0xFF << 8 | 0x6, "shell", 0x2000, &suc);
 	if (suc) {
-		printString("berhasil\r\n");
+		printString("We made it\r\n");
 	} else {
-		printString("gagal\r\n");
+		printString("Failed :(\r\n");
 	}
-	printString("huhu\r\n");
 	while (1);
 }
 
@@ -105,9 +102,6 @@ void writeSector(char *buffer, int sector) {
 }
 
 //read file
-//1. while pertama, sampai path nya abis
-//baca path nya sampe ketemu / lalu taro setiap directorynya ke array of 
-
 void readFile(char *buffer, char *path, int *result, char parentIndex) {
 	char files[1024];
 	char tempBuffer[512];
@@ -300,70 +294,8 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 		*sectors = 1;
 	}
 
-
-
-	
-
 	// Tulis indeks parent diisi ama x
 }
-
-// void writeFile(char *buffer, char *filename, int *sectors) {
-// 	char map[512];
-// 	char dir[512];
-// 	char sectorBuffer[512];
-// 	int dirIndex;
-
-// 	readSector(map, 1);
-// 	readSector(dir, 2);
-
-// 	for (dirIndex = 0; dirIndex < 16; ++dirIndex) {
-// 		if (dir[dirIndex * 32] == '\0') {
-// 			break;
-// 		}
-// 	}
-// 	if (dirIndex < 16) {
-// 		int i, j, sectorCount;
-// 		for (i = 0, sectorCount = 0; i < 256 && sectorCount < *sectors; ++i) {
-// 			if (map[i] == 0x00) {
-// 				++sectorCount;
-// 			}
-// 		}
-// 		if (sectorCount < *sectors) {
-// 			*sectors = 0; //insufficient
-// 			return;
-// 		}
-// 		else {
-// 			clear(dir + dirIndex * 32, 32);
-// 			for (i = 0; i < 12; ++i) {
-// 				if (filename[i] != '\0') {
-// 					dir[dirIndex * 32 + i] = filename[i];
-// 				}
-// 				else {
-// 					break;
-// 				}
-// 			}
-// 			for (i = 0, sectorCount = 0; i < 256 && sectorCount < *sectors; ++i) {
-// 				if (map[i] == 0x00) {
-// 					map[i] = 0xFF;
-// 					dir[dirIndex * 32 + 12 + sectorCount] = i;
-// 					clear(sectorBuffer, 512);
-// 					for (j = 0; j < 512; ++j) {
-// 						sectorBuffer[j] = buffer[sectorCount * 512 + j];
-// 					}
-// 					writeSector(sectorBuffer, i);
-// 					++sectorCount;
-// 				}
-// 			}
-// 		}	
-// 	}
-// 	else {
-// 		*sectors = -1; //insufficient dir entries
-// 		return;
-// 	}
-	
-// 	writeSector(map, 1);
-// 	writeSector(dir, 2);
-// }
 
 void executeProgram(char *filename, int segment, int *success) {
 	char bufferFile[512 * 16];
