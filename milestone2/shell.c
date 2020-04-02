@@ -1,4 +1,5 @@
 void ls(char parentIndex);
+void execProg(char* progName, char parentIndex);
 int compareStr(char* strA, char* strB);
 char searchForPath(char* path, char parentIndex);
 char* searchName(char parentIndex);
@@ -6,6 +7,7 @@ char* searchName(char parentIndex);
 int main() {
 	char curdir;
 	char* input;
+	int suc;
 
 	curdir = 0xFF;
 	while (1) {
@@ -19,11 +21,52 @@ int main() {
 			interrupt(0x21, 0x01, input, 1, 0);
 		} while (compareStr(input, ""));
 		interrupt(0x21, 0x00, "\r\n", 0, 0);
-		ls(0xFF);
+		execProg(input, 0xFF);
+
+		// interrupt(0x21, 0x00, "halo\r\n", 0, 0);
 		
 	}
 
 	return 0;
+}
+
+void execProg(char* progName, char parentIndex) {
+	int isFound = 0, k, h, isNameMatch, suc;
+	char files[1024];
+
+	interrupt(0x21, 0x2, files, 0x101, 0);
+	interrupt(0x21, 0x2, files + 512, 0x102, 0);
+
+	// interrupt(0x21, 0x00, progName, 0, 0);
+	// interrupt(0x21, 0x00, "\r\n", 0, 0);
+
+	k = 0;
+	while (k < 64 && !isFound) {
+		if (files[k * 16] == 0xFF && files[k * 16 + 1] != 0xFF) {
+			// interrupt(0x21, 0x00, "Nyampe parent dir\r\n", 0, 0);
+			h = 0;
+			isNameMatch = 1;
+            for (h = 0; h < 14; h++) {
+                if (progName[h] != files[h + k * 16 + 2]) {
+	                isNameMatch = 0;
+					break;
+        	    } else if (files[h + k * 16 + 2] == '\0' && progName[h] == '\0') {
+            		break;
+            	}
+        	}
+
+        	if (isNameMatch) {
+        		// interrupt(0x21, 0x00, "anjay nama sama\r\n", 0, 0);
+        		isFound = 1;
+        	}
+		}
+		k++;
+	}
+
+	if (isFound) {
+		interrupt(0x21, 6, progName, 0x4000, &isFound);
+		interrupt(0x21, 0, "Program berhasil dijalankan!\r\n", 0, 0);
+	}
 }
 
 void ls(char parentIndex) {
