@@ -1,30 +1,62 @@
 void ls(char parentIndex);
 void execProg(char* progName, char parentIndex);
+void cat(char parentIndex);
 int compareStr(char* strA, char* strB);
+int compareStrN(char* strA, char* strB, int n);
 char searchForPath(char* path, char parentIndex);
 char* searchName(char parentIndex);
+void getCommand(char* input);
 
 int main() {
-	char curdir;
+	char curdir, filename[14];
 	char* input;
-	int suc;
+	int suc, i;
 
 	curdir = 0xFF;
 	while (1) {
 		do {
-			if (curdir == 0XFF) {
+			// if (curdir == 0XFF) {
 				interrupt(0x21, 0x00, "Root", 0, 0);
-			} else {
-				interrupt(0x21, 0x00, "Kenapa ini\r\n", 0, 0);
-			}
+			// } else {
+			// 	interrupt(0x21, 0x00, "Kenapa ini\r\n", 0, 0);
+			// }
 			interrupt(0x21, 0x00, ">", 0, 0);
 			interrupt(0x21, 0x01, input, 1, 0);
 		} while (compareStr(input, ""));
 		interrupt(0x21, 0x00, "\r\n", 0, 0);
-		execProg(input, 0xFF);
-
-		// interrupt(0x21, 0x00, "halo\r\n", 0, 0);
+		// parseInput(input);
 		
+		// execProg(input, 0xFF);
+		
+		if (compareStrN(input, "cat", 3)) {
+			interrupt(0x21, 0x00, "Cat\r\n", 0, 0);
+			cat(0xFF);
+		} else if (compareStrN(input, "ls", 2)) {
+			interrupt(0x21, 0x00, "ls\r\n", 0, 0);
+			ls(0xFF);
+		} else if (compareStrN(input, "./", 2)) {
+			interrupt(0x21, 0x00, "exec\r\n", 0, 0);
+			i = 2;
+			while (i < 16 ) {
+				if (input[i] == '\0') {
+					break;
+				} else {
+					filename[i - 2] = input[i];
+				}
+				i++;
+			}
+
+			while (i < 16) {
+				filename[i-2] = '\0';
+				i++;
+			}
+			interrupt(0x21, 0x00, filename, 0, 0);
+			interrupt(0x21, 0x00, "\r\n", 0, 0);
+
+			execProg(filename, 0xFF);
+		} else {
+			interrupt(0x21, 0x00, "Invalid Command!\r\n", 0, 0);
+		}
 	}
 
 	return 0;
@@ -37,8 +69,8 @@ void execProg(char* progName, char parentIndex) {
 	interrupt(0x21, 0x2, files, 0x101, 0);
 	interrupt(0x21, 0x2, files + 512, 0x102, 0);
 
-	// interrupt(0x21, 0x00, progName, 0, 0);
-	// interrupt(0x21, 0x00, "\r\n", 0, 0);
+	interrupt(0x21, 0x00, progName, 0, 0);
+	interrupt(0x21, 0x00, "\r\n", 0, 0);
 
 	k = 0;
 	while (k < 64 && !isFound) {
@@ -64,8 +96,9 @@ void execProg(char* progName, char parentIndex) {
 	}
 
 	if (isFound) {
-		interrupt(0x21, 6, progName, 0x4000, &isFound);
-		interrupt(0x21, 0, "Program berhasil dijalankan!\r\n", 0, 0);
+		interrupt(0x21, 0x06, progName, 0x4000, &isFound);
+	} else {
+		interrupt(0x21, 0, "Program tidak ditemukan:(\r\n", 0, 0);
 	}
 }
 
@@ -84,15 +117,57 @@ void ls(char parentIndex) {
 				interrupt(0x10, 0xE00 + files[h + idxName], 0, 0, 0);
 				h++;
 			}
-			interrupt(0x21, 0x00, "\r\n", 0, 0);
+			interrupt(0x21, 0x00, "\r\n\0", 0, 0);
 		}
 		k++;
+	}
+}
+
+void cat(char parentIndex) {
+	char fileName[14], fileContent[512 * 16];
+	int isSuccess, i;
+	isSuccess = 0;
+
+	//empty Buffer
+	for (i = 0; i < 14; i++) {
+		fileName[i] = 0x0;
+	}
+	
+	for (i = 0; i < 512 * 16; i++) {
+		fileContent[i] = 0x0;
+	}
+	
+	//read input filename
+	interrupt(0x21, 0, "Input filename: \0", 0, 0);
+	interrupt(0x21, 1, &fileName, 0, 0);
+	interrupt(0x21, 0, "\r\n\0", 0, 0);
+
+	//read fileContent
+	interrupt(0x21, (parentIndex << 8) | 0x04, &fileContent, &fileName, &isSuccess);
+
+	if (isSuccess == 1) {
+		interrupt(0x21, 0, "File content: \r\n\0", 0, 0);
+		interrupt(0x21, 0, &fileContent, 0, 0);
+		interrupt(0x21, 0, "\r\n\0", 0, 0);
+	} else {
+		interrupt(0x21, 0, "File not found\r\n\0", 0, 0);
 	}
 }
 
 int compareStr(char* strA, char* strB) {
 	int i = 0;
 	while (!(strA[i] == '\0' && strB[i] == '\0')) {
+		if (strA[i] != strB[i]) {
+            return 0;
+        }
+		++i;
+	}
+	return 1;
+}
+
+int compareStrN(char* strA, char* strB, int n) {
+	int i = 0;
+	while (!(strA[i] == '\0' && strB[i] == '\0') && i < n) {
 		if (strA[i] != strB[i]) {
             return 0;
         }
