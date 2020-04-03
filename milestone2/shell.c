@@ -41,6 +41,9 @@ int main() {
 		} else if (compareStrN(input, "ls", 2)) {
 			interrupt(0x21, 0x00, "ls\r\n", 0, 0);
 			ls(0xFF);
+		} else if (compareStrN(input, "rm", 2)) {
+			interrupt(0x21, 0x00, "rm is being run\r\n\0", 0, 0);
+			rm(0xFF);
 		} else if (compareStrN(input, "./", 2)) {
 			interrupt(0x21, 0x00, "exec\r\n", 0, 0);
 			i = 2;
@@ -291,9 +294,8 @@ void cat(char parentIndex) {
 }
 
 void rm(char parentIndex) {
-	int sectorSize = 512;
-	char fileName[14], mapBuffer[512], files[sectorSize*2], sectBuffer[sectorSize];
-	int i, j, isFound, isNameMatch, idxName, secEntry;
+	char fileName[14], folderAndFiles[512*2], filesBuffer[512], sectBuffer[512];
+	int i, j, k, isFound, isNameMatch, idxName, fileEntry;
 	isFound = 0;
 
 	//empty Buffer
@@ -306,37 +308,40 @@ void rm(char parentIndex) {
 	interrupt(0x21, 1, &fileName, 0, 0);
 	interrupt(0x21, 0, "\r\n\0", 0, 0);
 
-	//search for file
-	readSector(&files, 257);
-	readSector(&files + 512, 258);
+	//search for file/folder
+	interrupt(0x21, 0x02, &folderAndFiles, 257, 0);
+	interrupt(0x21, 0x02, &filesBuffer, 258, 0);
+	for (i = 512; i < 1024; i++) {
+		folderAndFiles[i] = filesBuffer[i-512];
+	}
 	
 	i = 0;
-	while (!isFound && i < sectorSize * 2) {
+	while (!isFound && i < 1024) {
         // Search for parent idx w/ matching path name
-        for (i = 0; i < sectorSize * 2; i += 16) {
-			if (files[i] == parentIndex) {
-            	if (files[i + 1] != 0xFF && files[i + 2] != 0x0) {
+        for (i = 0; i < 1024; i += 16) {
+			//for files
+			if (folderAndFiles[i] == parentIndex) {
+            	if (folderAndFiles[i + 1] != 0xFF && folderAndFiles[i + 2] != 0x0) {
                 	idxName = i + 2;
                 
                 	//matching name
                 	isNameMatch = 1;
 	                for (j = 0; j < 14; j++) {
-    	                if (fileName[j] != files[j + idxName]) {
+    	                if (fileName[j] != folderAndFiles[j + idxName]) {
         	                isNameMatch = 0;
 							break;
-                	    } else if (files[j + idxName] == '\0' && fileName[j] == '\0') {
+                	    } else if (folderAndFiles[j + idxName] == '\0' && fileName[j] == '\0') {
                     		break;
                     	}
                 	}
 
                 	if (isNameMatch) {
                     	isFound = 1;
-                    	secEntry = files[i + 1];
+                    	fileEntry = folderAndFiles[i + 1];
 						break;
                 	}
-            	}
-				else if (files[i + 1] == 0xFF) {
-					//haven't got any clue yet on how to do this :(
+            	} else {
+					
 				}
         	}
 		}
@@ -346,8 +351,22 @@ void rm(char parentIndex) {
 		interrupt(0x21, 0, "File/folder not found\r\n\0", 0, 0);
 	}
 	else {
-		//deletion in map
+		interrupt(0x21, 0, "Kesini\r\n\0", 0, 0);
+		//deletion in sector
+		interrupt(0x21, 0x02, &sectBuffer, 259, 0);
+		k = 0;
+		while (sectBuffer[fileEntry * 16 + k] != '\0') {
+			//make it empty
+			sectBuffer[fileEntry * 16 + k] = 0x0;
+			k++;
+		}
 		
+		//delete file entry
+		folderAndFiles[fileEntry * 16 + 1] = '\0';
+
+		//rewrite buffer to sectors
+		interrupt(0x21, 0x03, &filesBuffer, 258, 0);
+		interrupt(0x21, 0x03, &sectBuffer, 259, 0);
 		interrupt(0x21, 0, "File/folder deleted successfully!\r\n\0", 0, 0);
 	}
 }
