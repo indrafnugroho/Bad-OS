@@ -163,7 +163,7 @@ int searchPath(char* dirCall, int parentIndex) {
 	}
 }
 
-void mkdir(char parentIndex) {
+void mkdir() {
 	char directory[16];
 	char file[512];
 	int i, found, emp;
@@ -186,9 +186,8 @@ void mkdir(char parentIndex) {
 	if(found) {
 		file[emp*16] = curdir;
 		file[emp*16+1] = 0xFF;
-		while(i<14) {
+		for(i=0;i<14;i++) {
 			file[emp*16+2+i] = directory[i];
-			i++;
 		}
 		interrupt(0x21, 0x3,file,257,0);
 		interrupt(0x21, 0x0,"\r\nMakedir Sabi\r\n\0", 0, 0);
