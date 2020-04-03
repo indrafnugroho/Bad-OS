@@ -97,6 +97,7 @@ void mkdir(char parentIndex) {
 		}
 	}
 	interrupt(0x21,0x3,file,257,0);
+	interrupt(0x21, 0x0,"\r\nMakedir Sabi\r\n\0", 0, 0);
 }
 
 void execProg(char* progName, char parentIndex) {
