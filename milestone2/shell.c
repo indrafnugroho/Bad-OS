@@ -1,18 +1,20 @@
 void ls(char parentIndex);
 void execProg(char* progName, char parentIndex);
 void cat(char parentIndex);
+void mkdir(char parentIndex);
 int compareStr(char* strA, char* strB);
 int compareStrN(char* strA, char* strB, int n);
 char searchForPath(char* path, char parentIndex);
 char* searchName(char parentIndex);
 void getCommand(char* input);
 
+char curdir = 0xFF;
+
 int main() {
-	char curdir, filename[14];
+	char filename[14];
 	char* input;
 	int suc, i;
 
-	curdir = 0xFF;
 	while (1) {
 		do {
 			// if (curdir == 0XFF) {
@@ -70,7 +72,7 @@ void mkdir(char parentIndex) {
 	char file[512];
 	int i, found, emp;
 	for(i=0;i<16;i++) {
-		dirName[i] = 0x0;
+		directory[i] = 0x0;
 	}
 
 	interrupt(0x21, 0x0,"Nama directory baru : \0", 0, 0);
@@ -93,6 +95,7 @@ void mkdir(char parentIndex) {
 			file[emp*16+2+i] = directory[i];
 			i++;
 		}
+	}
 	interrupt(0x21,0x3,file,257,0);
 }
 
