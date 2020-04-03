@@ -1,9 +1,9 @@
 void ls(char parentIndex);
 void execProg(char* progName, char parentIndex);
 void cat(char parentIndex);
-void mkdir(char parentIndex);
+void mkdir();
 void cd(char* cmd, int* idxDir);
-int compareStr(char* strA, char* strB);
+unsigned char compareStr(char* strA, char* strB);
 int compareStrN(char* strA, char* strB, int n);
 int searchPath(char* dirCall, int parentIndex);
 char searchForPath(char* path, char parentIndex);
@@ -61,7 +61,7 @@ int main() {
 
 			execProg(filename, 0xFF);
 		} else if(compareStr(input,"mkdir")) {
-			mkdir(0xFF);
+			mkdir();
 		} else if(compareStr(input,"cd")) {
 			cd(input+3,&curdir);
 		} else {
@@ -91,12 +91,12 @@ void cd(char* cmd, int* idxDir) {
 			if(val == 0x100) {
 				interrupt(0x21, 0, "Folder ga ketemu bro A!\0",0,0);
 				interrupt(0x21, 0, directory,0,0);
-				// interrupt(0x21, 0, '\r\n\0', 0, 0);
+				interrupt(0x21, 0, "\r\n\0", 0, 0);
 				cont = 0;
 			} else {
 				interrupt(0x21, 0, "Folder ketemu bro!\0",0,0);
 				interrupt(0x21, 0, directory,0,0);
-				// interrupt(0x21, 0, '\r\n\0', 0, 0);
+				interrupt(0x21, 0, "\r\n\0", 0, 0);
 				*idxDir = val;
 			}
 			cnt = 0;
@@ -109,17 +109,20 @@ void cd(char* cmd, int* idxDir) {
 	if(cont) {
 		val = searchPath(directory, *idxDir);
 		if(val == 0x100) {
-			interrupt(0x21, 0, "Folder ga ketemu bro!\0",0,0);
+			interrupt(0x21, 0, "Folder ga ketemu bro B!\0",0,0);
 			interrupt(0x21, 0, directory,0,0);
-			// interrupt(0x21, 0, '\r\n\0', 0, 0);
+			interrupt(0x21, 0, "\r\n\0", 0, 0);
 			cont = 0;
 		} else {
 			interrupt(0x21, 0, "Folder ketemu bro!\0",0,0);
 			interrupt(0x21, 0, directory,0,0);
-			// interrupt(0x21, 0, '\r\n\0', 0, 0);
+			interrupt(0x21, 0, "\r\n\0", 0, 0);
 			*idxDir = val;
 		}
 		cnt = 0;
+		for(i;i<14; ++i) {
+			directory[i] = 0;
+		}
 	} else {
 		*idxDir = initDir;
 	}
@@ -286,15 +289,27 @@ void cat(char parentIndex) {
 	}
 }
 
-int compareStr(char* strA, char* strB) {
+unsigned char compareStr(char* strA, char* strB) {
 	int i = 0;
-	while (!(strA[i] == '\0' && strB[i] == '\0')) {
-		if (strA[i] != strB[i]) {
-            return 0;
-        }
+	unsigned char sama = 1;
+	while (i < 128 && sama) {
+		if(strA[i] != strB[i]) {
+			sama = 0;
+		} else if(strA[i] == 0x0 && strB[i] == 0x0) {
+			i = 128;
+		}
 		++i;
 	}
-	return 1;
+	return sama;
+	
+	// i = 0;
+	// while (!(strA[i] == '\0' && strB[i] == '\0')) {
+	// 	if (strA[i] != strB[i]) {
+    //         return 0;
+    //     }
+	// 	++i;
+	// }
+	// return 1;
 }
 
 int compareStrN(char* strA, char* strB, int n) {
