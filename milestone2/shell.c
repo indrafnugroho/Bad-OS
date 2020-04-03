@@ -3,6 +3,7 @@ void execProg(char* progName, char parentIndex);
 void cat(char parentIndex);
 void mkdir(char* arg);
 int cd(char* cmd, int idxDir);
+void rm(char parentIndex);
 unsigned char compareStr(char* strA, char* strB);
 int compareStrN(char* strA, char* strB, int n);
 int searchPath(char* dirCall, int parentIndex);
@@ -14,7 +15,7 @@ int curdir;
 curdir = 0xFF;
 
 int main() {
-	char filename[14], directoryBuffer[1024], curDirName[128];
+	char arg[14], directoryBuffer[1024], curDirName[128];
 	char* input;
 	int suc, i, itrDirName, dirChange;
 	curdir = 0xFF;
@@ -64,64 +65,64 @@ int main() {
 			// interrupt(0x21, 0x00, "ls\r\n", 0, 0);
 			ls(curdir);
 		} else if (compareStrN(input, "./", 2)) {
-			interrupt(0x21, 0x00, "masuk if exec\r\n", 0, 0);
+			// interrupt(0x21, 0x00, "masuk if exec\r\n", 0, 0);
 			i = 2;
 			while (i < 16 ) {
 				if (input[i] == '\0') {
 					break;
 				} else {
-					filename[i - 2] = input[i];
+					arg[i - 2] = input[i];
 				}
 				i++;
 			}
 
 			while (i < 16) {
-				filename[i-2] = '\0';
+				arg[i-2] = '\0';
 				i++;
 			}
-			interrupt(0x21, 0x00, filename, 0, 0);
+			interrupt(0x21, 0x00, arg, 0, 0);
 			interrupt(0x21, 0x00, "\r\n", 0, 0);
 
-			execProg(filename, 0xFF);
+			execProg(arg, 0xFF);
 		} else if(compareStrN(input,"mkdir",5)) {
 			i = 6;
 			while (i < 20 ) {
 				if (input[i] == '\0') {
 					break;
 				} else {
-					filename[i - 6] = input[i];
+					arg[i - 6] = input[i];
 				}
 				i++;
 			}
 
 			while (i < 20) {
-				filename[i-6] = '\0';
+				arg[i-6] = '\0';
 				i++;
 			}
 
 			// interrupt(0x21, 0x00, "Dir yang dibuat:", 0, 0);
 			// interrupt(0x21, 0x00, filename, 0, 0);
-			mkdir(filename);
+			mkdir(arg);
 		} else if(compareStrN(input,"cd", 2)) {
 			i = 3;
 			while (i < 17 ) {
 				if (input[i] == '\0') {
 					break;
 				} else {
-					filename[i - 3] = input[i];
+					arg[i - 3] = input[i];
 				}
 				i++;
 			}
 
 			while (i < 17) {
-				filename[i-3] = '\0';
+				arg[i-3] = '\0';
 				i++;
 			}
 
 			// interrupt(0x21, 0x00, "Dir yang dituju:", 0, 0);
-			// interrupt(0x21, 0x00, filename, 0, 0);
+			// interrupt(0x21, 0x00, arg, 0, 0);
 			// interrupt(0x21, 0x00, "\r\n", 0, 0);
-			curdir = cd(filename, curdir);
+			curdir = cd(arg, curdir);
 			dirChange = 1;
 		} else {
 			interrupt(0x21, 0x00, "Invalid Command!\r\n", 0, 0);
@@ -269,7 +270,7 @@ void mkdir(char* arg) {
 
 	// interrupt(0x21, 0x0,"Nama directory baru : \0", 0, 0);
 	// interrupt(0x21, 0x1, directory, 0,0);
-	interrupt(0x21, 0x0,"\r\n", 0, 0);
+	// interrupt(0x21, 0x0,"\r\n", 0, 0);
 	interrupt(0x21, 0x2, file,0x101,0);
 	interrupt(0x21, 0x2, file + 512,0x102,0);
 	i = 0;
@@ -397,6 +398,68 @@ void cat(char parentIndex) {
 		interrupt(0x21, 0, "\r\n\0", 0, 0);
 	} else {
 		interrupt(0x21, 0, "File not founddddddddd\r\n\0", 0, 0);
+	}
+}
+
+void rm(char parentIndex) {
+	int sectorSize = 512;
+	char fileName[14], mapBuffer[512], files[512*2], sectBuffer[512];
+	int i, j, isFound, isNameMatch, idxName, secEntry;
+	isFound = 0;
+
+	//empty Buffer
+	for (i = 0; i < 14; i++) {
+		fileName[i] = 0x0;
+	}
+	
+	//read input filename to be deleted
+	interrupt(0x21, 0, "Input filename: \0", 0, 0);
+	interrupt(0x21, 1, &fileName, 0, 0);
+	interrupt(0x21, 0, "\r\n\0", 0, 0);
+
+	//search for file
+	interrupt(0x21, 0x2, files, 0x101, 0);
+	interrupt(0x21, 0x2, files + 512, 0x102, 0);
+	
+	i = 0;
+	while (!isFound && i < sectorSize * 2) {
+        // Search for parent idx w/ matching path name
+        for (i = 0; i < sectorSize * 2; i += 16) {
+			if (files[i] == parentIndex) {
+            	if (files[i + 1] != 0xFF && files[i + 2] != 0x0) {
+                	idxName = i + 2;
+                
+                	//matching name
+                	isNameMatch = 1;
+	                for (j = 0; j < 14; j++) {
+    	                if (fileName[j] != files[j + idxName]) {
+        	                isNameMatch = 0;
+							break;
+                	    } else if (files[j + idxName] == '\0' && fileName[j] == '\0') {
+                    		break;
+                    	}
+                	}
+
+                	if (isNameMatch) {
+                    	isFound = 1;
+                    	secEntry = files[i + 1];
+						break;
+                	}
+            	}
+				else if (files[i + 1] == 0xFF) {
+					//haven't got any clue yet on how to do this :(
+				}
+        	}
+		}
+    }
+	
+	if (!isFound) {
+		interrupt(0x21, 0, "File/folder not found\r\n\0", 0, 0);
+	}
+	else {
+		//deletion in map
+		
+		interrupt(0x21, 0, "File/folder deleted successfully!\r\n\0", 0, 0);
 	}
 }
 
