@@ -1,8 +1,5 @@
 void ls(char parentIndex);
-<<<<<<< HEAD
 void execProg(char* progName, char parentIndex);
-=======
->>>>>>> 0aba1c78cc190a890a069b6f927955c2a54640eb
 void cat(char parentIndex);
 int compareStr(char* strA, char* strB);
 int compareStrN(char* strA, char* strB, int n);
@@ -57,12 +54,46 @@ int main() {
 			interrupt(0x21, 0x00, "\r\n", 0, 0);
 
 			execProg(filename, 0xFF);
+		} else if(compareStrN(input,"mkdir", 5)) {
+			interrupt(0x21, 0x00, "mkdir\r\n", 0, 0);
+			mkdir(0xFF);
 		} else {
 			interrupt(0x21, 0x00, "Invalid Command!\r\n", 0, 0);
 		}
 	}
 
 	return 0;
+}
+
+void mkdir(char parentIndex) {
+	char directory[16];
+	char file[512];
+	int i, found, emp;
+	for(i=0;i<16;i++) {
+		dirName[i] = 0x0;
+	}
+
+	interrupt(0x21, 0x0,"Nama directory baru : \0", 0, 0);
+	interrupt(0x21, 0x1, directory, 0,0);
+	interrupt(0x21, 0x2,file,257,0);
+	i = 0;
+	found = 0;
+	for(i;i<64;i++) {
+		if(file[i*16] == 0x0 && file[i*16+1] == 0) {
+			found = 1;
+			emp = i;
+		} if(found) {
+			break;
+		}
+	}
+	if(found) {
+		file[emp*16+1] = 0xFF;
+		file[emp*16] = curdir;
+		while(i<14) {
+			file[emp*16+2+i] = directory[i];
+			i++;
+		}
+	interrupt(0x21,0x3,file,257,0);
 }
 
 void execProg(char* progName, char parentIndex) {
