@@ -1,6 +1,7 @@
 void ls(char parentIndex);
 void execProg(char* progName, char parentIndex);
 void cat(char parentIndex);
+void rm(char parentIndex);
 void mkdir();
 void cd(char* cmd, int* idxDir);
 unsigned char compareStr(char* strA, char* strB);
@@ -286,6 +287,68 @@ void cat(char parentIndex) {
 		interrupt(0x21, 0, "\r\n\0", 0, 0);
 	} else {
 		interrupt(0x21, 0, "File not found\r\n\0", 0, 0);
+	}
+}
+
+void rm(char parentIndex) {
+	int sectorSize = 512;
+	char fileName[14], mapBuffer[512], files[sectorSize*2], sectBuffer[sectorSize];
+	int i, j, isFound, isNameMatch, idxName, secEntry;
+	isFound = 0;
+
+	//empty Buffer
+	for (i = 0; i < 14; i++) {
+		fileName[i] = 0x0;
+	}
+	
+	//read input filename to be deleted
+	interrupt(0x21, 0, "Input filename: \0", 0, 0);
+	interrupt(0x21, 1, &fileName, 0, 0);
+	interrupt(0x21, 0, "\r\n\0", 0, 0);
+
+	//search for file
+	readSector(&files, 257);
+	readSector(&files + 512, 258);
+	
+	i = 0;
+	while (!isFound && i < sectorSize * 2) {
+        // Search for parent idx w/ matching path name
+        for (i = 0; i < sectorSize * 2; i += 16) {
+			if (files[i] == parentIndex) {
+            	if (files[i + 1] != 0xFF && files[i + 2] != 0x0) {
+                	idxName = i + 2;
+                
+                	//matching name
+                	isNameMatch = 1;
+	                for (j = 0; j < 14; j++) {
+    	                if (fileName[j] != files[j + idxName]) {
+        	                isNameMatch = 0;
+							break;
+                	    } else if (files[j + idxName] == '\0' && fileName[j] == '\0') {
+                    		break;
+                    	}
+                	}
+
+                	if (isNameMatch) {
+                    	isFound = 1;
+                    	secEntry = files[i + 1];
+						break;
+                	}
+            	}
+				else if (files[i + 1] == 0xFF) {
+					//haven't got any clue yet on how to do this :(
+				}
+        	}
+		}
+    }
+	
+	if (!isFound) {
+		interrupt(0x21, 0, "File/folder not found\r\n\0", 0, 0);
+	}
+	else {
+		//deletion in map
+		
+		interrupt(0x21, 0, "File/folder deleted successfully!\r\n\0", 0, 0);
 	}
 }
 
