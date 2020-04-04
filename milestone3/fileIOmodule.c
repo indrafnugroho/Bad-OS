@@ -1,4 +1,3 @@
-// fileIO module
 #include "fileIOmodule.h"
 
 void readFile(char *buffer, char *path, int *result, char parentIndex) {
@@ -187,4 +186,41 @@ void writeFile(char *buffer, char *path, int *sectors, char parentIndex) {
 	}
 
 	// Tulis indeks parent diisi ama x
+}
+
+void delFile(char entry) {
+	char mapBuffer[512], folderAndFiles[1024], sectBuffer[512];
+	int i;
+	
+	//read sector 257 and 258
+	interrupt(0x21, 0x02, folderAndFiles, 257, 0);
+	interrupt(0x21, 0x02, folderAndFiles + 512, 258, 0);
+	
+	//delete file entry
+	folderAndFiles[entry * 16] = 0x0;
+	folderAndFiles[entry * 16 + 1] = '\0';
+		
+	//deletion in map and sector
+	interrupt(0x21, 0x02, &mapBuffer, 256, 0);
+	interrupt(0x21, 0x02, &sectBuffer, 259, 0);
+	i = 0;
+	while (sectBuffer[entry * 16 + i] != '\0' && i < 16) {
+		//make it empty
+		mapBuffer[sectBuffer[entry * 16 + i]] = 0x0;
+		sectBuffer[entry * 16 + i] = 0x0;
+		i++;
+	}
+	//rewrite buffer to sectors
+	interrupt(0x21, 0x03, &folderAndFiles, 257, 0);
+	interrupt(0x21, 0x03, folderAndFiles + 512, 258, 0);
+	interrupt(0x21, 0x03, &sectBuffer, 259, 0);
+	interrupt(0x21, 0x03, &mapBuffer, 256, 0);
+}
+
+void readSector(char *buffer, int sector) {
+	interrupt(0x13, 0x201, buffer, div(sector, 36) * 0x100 + mod(sector, 18) + 1, mod(div(sector, 18), 2) * 0x100);
+}
+
+void writeSector(char *buffer, int sector) {
+	interrupt(0x13, 0x301, buffer, div(sector, 36) * 0x100 + mod(sector, 18) + 1, mod(div(sector, 18), 2) * 0x100);
 }

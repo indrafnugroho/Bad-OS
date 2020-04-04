@@ -1,4 +1,3 @@
-// math module
 #include "mathmodule.h"
 
 int mod(int x, int y) { 

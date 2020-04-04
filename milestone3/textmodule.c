@@ -1,4 +1,3 @@
-// text module
 #include "textmodule.h"
 
 void printString(char *string) {

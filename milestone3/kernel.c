@@ -1,21 +1,23 @@
 void handleInterrupt21 (int AX, int BX, int CX, int DX);
 
 // text module
+
 #include "textmodule.h"
 
 // system module
-void readSector(char *buffer, int sector); 
-void writeSector(char *buffer, int sector); 
 void clear(char *buffer, int length); //Fungsi untuk mengisi buffer dengan 0
 void executeProgram(char *filename, int segment, int *success);
 
 // fileIO module
+
 #include "fileIOmodule.h"
 
 // folderIO module
+
 #include "folderIOmodule.h"
 
 // math module
+
 #include "mathmodule.h"
 
 //Main Function
@@ -61,13 +63,7 @@ void handleInterrupt21 (int AX, int BX, int CX, int DX) {
 }
 
 // system module
-void readSector(char *buffer, int sector) {
-	interrupt(0x13, 0x201, buffer, div(sector, 36) * 0x100 + mod(sector, 18) + 1, mod(div(sector, 18), 2) * 0x100);
-}
 
-void writeSector(char *buffer, int sector) {
-	interrupt(0x13, 0x301, buffer, div(sector, 36) * 0x100 + mod(sector, 18) + 1, mod(div(sector, 18), 2) * 0x100);
-}
 
 void clear(char *buffer, int length) {
 	int i;
@@ -80,6 +76,7 @@ void executeProgram(char *filename, int segment, int *success) {
 	char bufferFile[512 * 16];
 	int i;
 	
+	clear(bufferFile, 512 * 16);
 	readFile(&bufferFile, filename, success, 0xFF);
 	if (*success) {
 		for (i=0; i<512 * 16; i++) {

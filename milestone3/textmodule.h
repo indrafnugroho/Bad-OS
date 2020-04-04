@@ -1,5 +1,3 @@
-// textmodule.h
-
 #ifndef TEXTMODULE_H
 #define TEXTMODULE_H
 

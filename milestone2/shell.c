@@ -149,7 +149,7 @@ int main() {
 				i++;
 			}
 
-			curdir = mv(arg, curdir);
+			curdir = mv(arg, curdir); 
 		} else {
 			interrupt(0x21, 0x00, "Invalid Command!\r\n", 0, 0);
 			executeBin(input);
@@ -169,6 +169,7 @@ void mv(char* cmd, int* idxDir) {
 	var = 0;
 	initDir = *(idxDir);
 	dirTujuan = *(idxDir);
+	int panjang = 512;
 	for (i =0; i < 14; ++i) {
 		directory[i] = '\0';
 		dirDipindah[i] = '0';
@@ -226,49 +227,44 @@ void mv(char* cmd, int* idxDir) {
 	//sekarang baru mau mindahin :)
 	if(lanjot) {
 		interrupt(0x21, 2, directory, 0x101,0);
-		interrupt(0x21, 0, directory, 0,0);
+		interrupt(0x21, 3, directory + panjang, 0,0);
 		directory[nomorPindah*16] = dirTujuan;
+		interrupt(0x21, 2, directory + panjang, 0,0);
+		interrupt(0x21, 3, directory, 0x101,0);
+		interrupt(0x21, 0, "Done!", 0,0);
 	}
 	for (i =0; i < 14; ++i) {
 		directory[i] = '\0';
-		dirDipindah[i] = '0';
+		dirDipindah[i] = '\0';
 	}
 }
 
 void executeBin(char* cmd) {
 	char files[1024];
-	// char cache[8192];
+	char cache[8192];
 	int i, j, isMatch, sec;
 	for(i=0;i<1024;++i) {
 		files[i] = '\0';
 	}
 	interrupt(0x21, 0x2, files, 0x101, 0);
-	interrupt(0x21, files + 512, 0x102, 0);
+	interrupt(0x21, 0x2, files + 512, 0x102, 0);
 	isMatch = 0;
 	i = 0;
 	while(isMatch == 0 && i < 64) {
-		if(files[i*16] == 0x01 && files[i*16] == 0xFF) {
+		if( files[i*16] == 0xFF&&files[16*i] == 0x01) {
 			interrupt(0x21, 0, "File ketemu bro! Nama filenya : \0", 0, 0);
 			interrupt(0x21, 0, files + (i*16) + 2, 0, 0);
-			interrupt(0x21, 0, "\r\n\0", 0,0);
 			if(compareStr(files + i*16 + 2, cmd)) {
 				interrupt(0x21, 0, "File cocok!\r\n\0",0,0);
 				isMatch = 1;
-				// for(j=0;j<8912;j++) {
-				// 	cache[j] = 0x0;
-				// }
-				// cache[0] = curdir;
-				// interrupt(0x21,0xFF05,cache, "caching", &sec);
-				// interrupt(0x21, 0, "cached!\r\n\0", 0,0);
-				// interrupt(0x21, 0, cmd, 0x4000, &isMatch);
 			}
 		}
 		++i;
 	}
-	if(isMatch == 0) {
-		interrupt(0x21, 0, "Gada file kek gitu udahh..\r\n\0",0,0);
-	} else{
+	if(isMatch == 1) {
 		execProg(cmd, curdir);
+	} else{
+		interrupt(0x21, 0, "Gada file kek gitu udahh..\r\n\0",0,0);
 	}
 }
 
@@ -437,6 +433,7 @@ int searchPath(char* dirCall, int parentIndex) {
 void mkdir(char* arg) {
 	char directory[14];
 	char file[1024];
+	int s = 9;
 	int i, found, emp;
 	for(i=0;i<14;i++) {
 		directory[i] = arg[i];
@@ -453,6 +450,9 @@ void mkdir(char* arg) {
 			break;
 		}
 		++i;
+	}
+	if(found) {
+		s = 16;
 	}
 	if(found) {
 		file[emp*16] = curdir;

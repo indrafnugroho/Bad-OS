@@ -1,5 +1,3 @@
-// mathmodule.h
-
 #ifndef MATHMODULE_H
 #define MATHMODULE_H
 
