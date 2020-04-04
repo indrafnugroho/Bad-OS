@@ -3,16 +3,16 @@
 #include "folderIOmodule.h"
 
 void mv(char* cmd, int* idxDir) {
-	char directory[14];
-	char dirDipindah[14];
-	char files[1024];
+	char directory[14];   
 	int count, val, nomorPindah, lanjot, var, initDir, dirTujuan,i;
+	char files[1024];
 	int panjang = 512;
+	char dirDipindah[14];
+	var = 0;
 	count = 0;
 	lanjot = 1;
-	var = 0;
+	dirTujuan = *(idxDir);s
 	initDir = *(idxDir);
-	dirTujuan = *(idxDir);
 	
 	for (i =0; i < 14; ++i) {
 		directory[i] = '\0';
@@ -24,21 +24,21 @@ void mv(char* cmd, int* idxDir) {
 	i = 0;
 	while (i < 128 && (cmd[i] != 0 && lanjot == 1)) {
 		if(var == 0) {
-			if(cmd[i] == 32 && cmd[i] == 0) {
-				dirDipindah[count] = cmd[i];
-				++count;
-			} else if (cmd[i] == 64) {
+            if (cmd[i] == 64) {
 				nomorPindah = searchPath(dirDipindah, *idxDir);
-				if(nomorPindah == 64) {
-					interrupt(0x21, 0, "Gaiso mindah iki bro! : \0",0,0);
+				if(nomorPindah != 64) {
+					count = 0;
+					var = 1;
+				} else {
+                    interrupt(0x21, 0, "Gaiso mindah iki bro! : \0",0,0);
 					interrupt(0x21, 0, dirDipindah, 0, 0);
 					interrupt(0x21, 0, "\r\n\0", 0, 0);
 					lanjot = 0;
-				} else {
-					count = 0;
-					var = 1;
 				}
-			}
+			} else if(cmd[i] == 32 && cmd[i] == 0) {
+				dirDipindah[count] = cmd[i];
+				++count;
+			} 
 			if(cmd[i+1] == 32 || cmd[i+2] == 32){
 				interrupt(0x21, 0, "Out of bounds!\r\n\0",0,0);
 				lanjot = 0;
@@ -46,11 +46,7 @@ void mv(char* cmd, int* idxDir) {
 		}
 		else if(var == 1) {
 			//cd di tempat tujuan
-			if(cmd[i] == '/') {
-				//isi array
-				directory[count] = cmd[i];
-				++count;
-			} else if(cmd[i] == 32 || cmd[i] == '/') {
+            if(cmd[i] == 32 || cmd[i] == '/') {
 				nomorPindah = searchPath(directory, dirTujuan);
 				if(nomorPindah == 32) {
 					interrupt(0x21, 0, "Gaada cok! : \0",0,0);
@@ -64,7 +60,11 @@ void mv(char* cmd, int* idxDir) {
 					dirTujuan = nomorPindah;
 				}
 				count = 0;
-			}
+			}else if(cmd[i] == '/') {
+				//isi array
+				directory[count] = cmd[i];
+				++count;
+			} 
 		}
 		++i;
 	}
