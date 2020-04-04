@@ -1,3 +1,5 @@
+#include "math.h"
+
 /* Ini deklarasi fungsi */
 void handleInterrupt21 (int AX, int BX, int CX, int DX);
 void printString(char *string); //done
@@ -10,9 +12,9 @@ void readFile(char *buffer, char *path, int *result, char parentIndex);
 void executeProgram(char *filename, int segment, int *success);
 void printLogo();
 
-//Fungsi Matematika
-int mod(int x, int y); //done
-int div(int a,int b); //done
+// //Fungsi Matematika
+// int mod(int x, int y); //done
+// int div(int a,int b); //done
 
 //Main Function
 int main() {
@@ -153,6 +155,7 @@ void readFile(char *buffer, char *path, int *result, char parentIndex) {
 	}
 	else {
 		readSector(&tempBuffer,259);
+
 		while ((j < 16) && (tempBuffer[j + s * 16] != '\0')) {
 			readSector(&tempBuffer2, tempBuffer[j + s * 16]);
 			for(l = 0; l < sectorSize; ++l) {
@@ -301,15 +304,17 @@ void executeProgram(char *filename, int segment, int *success) {
 	char bufferFile[512 * 16];
 	int i;
 	
+	clear(bufferFile, 512 * 16);
 	readFile(&bufferFile, filename, success, 0xFF);
+
 	if (*success) {
 		interrupt(0x21, 0, "File exists!\r\n", 0, 0);
 		for (i=0; i<512 * 16; i++) {
 			putInMemory(segment, i, bufferFile[i]);
 		}
-		interrupt(0x21, 0, "Ke sini nyampe bro!\r\n", 0, 0);
+		// interrupt(0x21, 0, "Ke sini nyampe bro!\r\n", 0, 0);
 		launchProgram(segment);
-		interrupt(0x21, 0, "Ke sini nyampe juga bro!\r\n", 0, 0);
+		// interrupt(0x21, 0, "Ke sini nyampe juga bro!\r\n", 0, 0);
 	} else {
 		interrupt(0x21, 0, "File doesn't exist!", 0, 0);
 	}
@@ -329,15 +334,15 @@ void printLogo () {
 }
 
 //Implementasi Fungsi Matematika 
-int mod(int x, int y) { 
-    while (x>=y) {
-        x-=y;
-    }return x;
-}
+// int mod(int x, int y) { 
+//     while (x>=y) {
+//         x-=y;
+//     }return x;
+// }
 
-int div (int x, int y) {
-	int ratio = 0;
-	while(ratio*y <= x) {
-		ratio += 1;
-	}return(ratio-1);
-}
+// int div (int x, int y) {
+// 	int ratio = 0;
+// 	while(ratio*y <= x) {
+// 		ratio += 1;
+// 	}return(ratio-1);
+// }

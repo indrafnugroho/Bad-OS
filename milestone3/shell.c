@@ -8,6 +8,7 @@ char searchForPath(char* path, char parentIndex);
 char* searchName(char parentIndex);
 void getCommand(char* input);
 void executeBin(char* cmd);
+void mv(char* cmd, int* idxDir);
 
 int curdir, dirBack, dirChange, itrDirName;
 char curDirName[128], directoryBuffer[1024];
@@ -155,6 +156,23 @@ int main() {
 			}
 
 			curdir = cd(arg, curdir);
+		} else if(compareStrN(input,"mv", 2)) {
+			i = 3;
+			while (i < 17 ) {
+				if (input[i] == '\0') {
+					break;
+				} else {
+					arg[i - 3] = input[i];
+				}
+				i++;
+			}
+
+			while (i < 17) {
+				arg[i-3] = '\0';
+				i++;
+			}
+
+			curdir = mv(arg, curdir); 
 		} else {
 			interrupt(0x21, 0x00, "Invalid Command!\r\n", 0, 0);
 			executeBin(input);
@@ -162,6 +180,90 @@ int main() {
 	}
 
 	return 0;
+}
+
+void mv(char* cmd, int* idxDir) {
+	char directory[14];
+	char dirDipindah[14];
+	char files[1024];
+	int count, val, nomorPindah, lanjot, var, initDir, dirTujuan,i;
+	count = 0;
+	lanjot = 1;
+	var = 0;
+	initDir = *(idxDir);
+	dirTujuan = *(idxDir);
+	int panjang = 512;
+	for (i =0; i < 14; ++i) {
+		directory[i] = '\0';
+		dirDipindah[i] = '0';
+	}
+	for (i = 0; i < 1024; i++) {
+		files[i] = '\0';
+	}
+	i = 0;
+	while (i < 128 && (cmd[i] != 0 && lanjot = 1)) {
+		if(var == 0) {
+			if(cmd[i] == 32 && cmd[i] == 0) {
+				dirDipindah[count] = cmd[i];
+				++count;
+			} else if (cmd[i] == 64) {
+				nomorPindah = searchPath(dirDipindah, *idxDir);
+				if(nomorPindah == 64) {
+					interrupt(0x21, 0, "Gaiso mindah iki bro! : \0",0,0);
+					interrupt(0x21, 0, dirDipindah, 0, 0);
+					interrupt(0x21, 0, "\r\n\0", 0, 0);
+					lanjot = 0;
+				} else {
+					count = 0;
+					var = 1;
+				}
+			}
+			if(cmd[i+1] == 32 || cmd[i+2] == 32){
+				interrupt(0x21, 0, "Out of bounds!\r\n\0",0,0);
+				lanjot = 0;
+			}
+		}
+		else if(var == 1) {
+			//cd di tempat tujuan
+			if(cmd[i] == '/') {
+				//isi array
+				directory[count] = cmd[i];
+				++count;
+			} else if(cmd[i] == 32 || cmd[i] == '/') {
+				nomorPindah = searchPath(directory, dirTujuan);
+				if(nomorPindah == 32) {
+					interrupt(0x21, 0, "Gaada cok! : \0",0,0);
+					interrupt(0x21, 0, directory, 0,0);
+					interrupt(0x21, 0, "\r\n\0", 0, 0);
+					lanjot = 0;
+				} else {
+					interrupt(0x21, 0, "Ada cok! : \0",0,0);
+					interrupt(0x21, 0, directory, 0,0);
+					interrupt(0x21, 0, "\r\n\0", 0, 0);
+					dirTujuan = nomorPindah;
+				}
+				count = 0;
+			}
+		}
+		++i;
+	}
+	//sekarang baru mau mindahin :)
+	if(lanjot) {
+		interrupt(0x21, 2, directory, 0x101,0);
+		interrupt(0x21, 3, directory + panjang, 0,0);
+		directory[nomorPindah*16] = dirTujuan;
+		interrupt(0x21, 2, directory + panjang, 0,0);
+		interrupt(0x21, 3, directory, 0x101,0);
+		interrupt(0x21, 0, "Mindah : " + 512, 0,0);
+		interrupt(0x21, 0, dirDipindah, 0,0);
+		interrupt(0x21, 0, " ke " + 512, 0,0);
+		interrupt(0x21, 0, directory + 512, 0,0);
+		interrupt(0x21, 0, "\r\n\0", 0,0);
+	}
+	for (i =0; i < 14; ++i) {
+		directory[i] = '\0';
+		dirDipindah[i] = '\0';
+	}
 }
 
 void executeBin(char* cmd) {
