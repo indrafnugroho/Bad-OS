@@ -10,6 +10,7 @@ int searchPath(char* dirCall, int parentIndex);
 char searchForPath(char* path, char parentIndex);
 char* searchName(char parentIndex);
 void getCommand(char* input);
+void executeBin(char* cmd);
 
 int curdir, dirBack, dirChange;
 curdir = 0xFF;
@@ -140,10 +141,48 @@ int main() {
 			curdir = cd(arg, curdir);
 		} else {
 			interrupt(0x21, 0x00, "Invalid Command!\r\n", 0, 0);
+			executeBin(input);
 		}
 	}
 
 	return 0;
+}
+
+void executeBin(char* cmd) {
+	char files[1024];
+	char cache[8192];
+	int i, j, isMatch, sec;
+	for(i=0;i<1024;++i) {
+		files[i] = '\0';
+	}
+	interrupt(0x21, 0x2, files, 0x101, 0);
+	interrupt(0x21, files + 512, 0x102, 0);
+	isMatch = 0;
+	i = 0;
+	while(isMatch == 0 && i < 64) {
+		if(files[i*16] == 0x01 && files[i*16] == 0xFF) {
+			interrupt(0x21, 0, "File ketemu bro! Nama filenya : \0", 0, 0);
+			interrupt(0x21, 0, files + (i*16) + 2, 0, 0);
+			interrupt(0x21, 0, "\r\n\0", 0,0);
+			if(compareStr(files + i*16 + 2, cmd)) {
+				interrupt(0x21, 0, "File cocok!\r\n\0",0,0);
+				isMatch = 1;
+				// for(j=0;j<8912;j++) {
+				// 	cache[j] = 0x0;
+				// }
+				// cache[0] = curdir;
+				// interrupt(0x21,0xFF05,cache, "caching", &sec);
+				// interrupt(0x21, 0, "cached!\r\n\0", 0,0);
+				// interrupt(0x21, 0, cmd, 0x4000, &isMatch);
+			}
+		}
+		++i;
+	}
+	if(isMatch == 0) {
+		interrupt(0x21, 0, "Gada file kek gitu udahh..\r\n\0",0,0);
+	} else{
+		execProg(cmd, curdir);
+	}
 }
 
 int cd(char* cmd, int idxDir) {
