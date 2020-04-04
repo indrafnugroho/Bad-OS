@@ -175,6 +175,7 @@ void mv(char* cmd, int* idxDir) {
 	var = 0;
 	initDir = *(idxDir);
 	dirTujuan = *(idxDir);
+	int panjang = 512;
 	for (i =0; i < 14; ++i) {
 		directory[i] = '\0';
 		dirDipindah[i] = '0';
@@ -232,12 +233,19 @@ void mv(char* cmd, int* idxDir) {
 	//sekarang baru mau mindahin :)
 	if(lanjot) {
 		interrupt(0x21, 2, directory, 0x101,0);
-		interrupt(0x21, 0, directory, 0,0);
+		interrupt(0x21, 3, directory + panjang, 0,0);
 		directory[nomorPindah*16] = dirTujuan;
+		interrupt(0x21, 2, directory + panjang, 0,0);
+		interrupt(0x21, 3, directory, 0x101,0);
+		interrupt(0x21, 0, "Mindah : " + 512, 0,0);
+		interrupt(0x21, 0, dirDipindah, 0,0);
+		interrupt(0x21, 0, " ke " + 512, 0,0);
+		interrupt(0x21, 0, directory + 512, 0,0);
+		interrupt(0x21, 0, "\r\n\0", 0,0);
 	}
 	for (i =0; i < 14; ++i) {
 		directory[i] = '\0';
-		dirDipindah[i] = '0';
+		dirDipindah[i] = '\0';
 	}
 }
 
