@@ -14,7 +14,6 @@ void getCommand(char* input);
 int curdir, dirBack, dirChange;
 curdir = 0xFF;
 
-
 int main() {
 	char arg[14], directoryBuffer[1024], curDirName[128];
 	char* input;
@@ -77,8 +76,6 @@ int main() {
 		} else if (compareStrN(input, "rm", 2)) {
 			interrupt(0x21, 0x00, "rm is being run\r\n\0", 0, 0);
 			rm(curdir);
-			// interrupt(0x21, 0x00, "ls\r\n", 0, 0);
-			// ls(curdir);
 		} else if (compareStrN(input, "./", 2)) {
 			// interrupt(0x21, 0x00, "masuk if exec\r\n", 0, 0);
 			i = 2;
@@ -418,8 +415,8 @@ void cat(char parentIndex) {
 }
 
 void rm(char parentIndex) {
-	char fileName[14], folderAndFiles[512*2], filesBuffer[512], sectBuffer[512];
-	int i, j, k, isFound, isNameMatch, idxName, fileEntry;
+	char fileName[14], mapBuffer[512], folderAndFiles[512*2], tempBuffer[512], sectBuffer[512];
+	int i, j, k, l, isFound, isNameMatch, idxName, fileEntry;
 	isFound = 0;
 
 	//empty Buffer
@@ -434,10 +431,7 @@ void rm(char parentIndex) {
 
 	//search for file/folder
 	interrupt(0x21, 0x02, &folderAndFiles, 257, 0);
-	interrupt(0x21, 0x02, &filesBuffer, 258, 0);
-	for (i = 512; i < 1024; i++) {
-		folderAndFiles[i] = filesBuffer[i-512];
-	}
+	interrupt(0x21, 0x02, folderAndFiles + 512, 258, 0);
 	
 	i = 0;
 	while (!isFound && i < 1024) {
@@ -465,7 +459,7 @@ void rm(char parentIndex) {
 						break;
                 	}
             	} else {
-					
+					//haven't got any clue yet on how to handle deleting dir
 				}
         	}
 		}
@@ -475,22 +469,26 @@ void rm(char parentIndex) {
 		interrupt(0x21, 0, "File/folder not found\r\n\0", 0, 0);
 	}
 	else {
-		interrupt(0x21, 0, "Kesini\r\n\0", 0, 0);
-		//deletion in sector
+		//delete file entry
+		folderAndFiles[fileEntry * 16] = 0x0;
+		folderAndFiles[fileEntry * 16 + 1] = '\0';
+		
+		//deletion in map and sector
+		interrupt(0x21, 0x02, &mapBuffer, 256, 0);
 		interrupt(0x21, 0x02, &sectBuffer, 259, 0);
 		k = 0;
-		while (sectBuffer[fileEntry * 16 + k] != '\0') {
+		while (sectBuffer[fileEntry * 16 + k] != '\0' && k < 16) {
 			//make it empty
+			mapBuffer[sectBuffer[fileEntry * 16 + k]] = 0x0;
 			sectBuffer[fileEntry * 16 + k] = 0x0;
 			k++;
 		}
-		
-		//delete file entry
-		folderAndFiles[fileEntry * 16 + 1] = '\0';
 
 		//rewrite buffer to sectors
-		interrupt(0x21, 0x03, &filesBuffer, 258, 0);
+		interrupt(0x21, 0x03, &folderAndFiles, 257, 0);
+		interrupt(0x21, 0x03, folderAndFiles + 512, 258, 0);
 		interrupt(0x21, 0x03, &sectBuffer, 259, 0);
+		interrupt(0x21, 0x03, &mapBuffer, 256, 0);
 		interrupt(0x21, 0, "File/folder deleted successfully!\r\n\0", 0, 0);
 	}
 }
