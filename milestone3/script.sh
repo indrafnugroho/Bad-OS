@@ -37,7 +37,7 @@ ld86 -o rm -d rm.o lib_asm.o textmodule.o fileIOmodule.o folderIOmodule.o mathmo
 
 # compile mkdir
 bcc -ansi -c mkdir.c -o mkdir.o
-ld86 -o mkdir -d mkdir.o lib_asm.o
+ld86 -o mkdir -d mkdir.o lib_asm.o textmodule.o folderIOmodule.o
 ./loadFile mkdir
 
 ./loadFile tes.txt 

@@ -1,4 +1,3 @@
-void ls(char parentIndex);
 void execProg(char* progName, char parentIndex);
 int cd(char* cmd, int idxDir);
 unsigned char compareStr(char* strA, char* strB);
