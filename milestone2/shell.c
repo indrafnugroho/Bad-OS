@@ -11,13 +11,14 @@ char searchForPath(char* path, char parentIndex);
 char* searchName(char parentIndex);
 void getCommand(char* input);
 
-int curdir, dirBack, dirChange;
+int curdir, dirBack, dirChange, itrDirName;
+char curDirName[128], directoryBuffer[1024];
 curdir = 0xFF;
 
 int main() {
-	char arg[14], directoryBuffer[1024], curDirName[128];
+	char arg[14];
 	char* input;
-	int suc, i, itrDirName;
+	int suc, i;
 	curdir = 0xFF;
 	itrDirName = 0;
 	dirChange = 0;
@@ -32,34 +33,16 @@ int main() {
 
 	while (1) {
 		do {
+			interrupt(0x21, 0x2, directoryBuffer, 0x101, 0);
+			interrupt(0x21, 0x2, directoryBuffer + 512, 0x102, 0);
 			interrupt(0x21, 0x00, "Root", 0, 0);
-			if (dirChange) {
-				if (dirBack == 0) {
-					interrupt(0x21, 0x2, directoryBuffer, 0x101, 0);
-					interrupt(0x21, 0x2, directoryBuffer + 512, 0x102, 0);
-					// interrupt(0x21, 0x00, "abis readdir\r\n", 0, 0);
-
-					curDirName[itrDirName++] = '/';
-					i = 0;
-					while (i < 14 ) {
-						if (directoryBuffer[curdir * 16 + 2 + i] == '\0') {
-							// interrupt(0x21, 0x00, "bye loop\r\n", 0, 0);
-							break;
-						} else {
-							// interrupt(0x21, 0x00, "masukkin char\r\n", 0, 0);
-							curDirName[itrDirName + i] = directoryBuffer[i + curdir * 16 + 2];
-							i++;
-						}
-					}
-					itrDirName += i;
-					dirChange = 0;
-				} else {
-					while (!(curDirName[itrDirName] == '/')) {
-						curDirName[itrDirName--] = '\0';
-					}
-					curDirName[itrDirName] = '\0';
-					dirBack = 0;
+			if (!(dirBack == 0)) {
+				while (!(curDirName[itrDirName] == '/')) {
+					curDirName[itrDirName--] = '\0';
 				}
+				curDirName[itrDirName] = '\0';
+				dirBack = 0;
+				
 			}
 			interrupt(0x21, 0x00, curDirName, 0, 0);
 			interrupt(0x21, 0x00, ">", 0, 0);
@@ -68,10 +51,10 @@ int main() {
 		interrupt(0x21, 0x00, "\r\n", 0, 0);
 		
 		if (compareStrN(input, "cat", 3)) {
-			interrupt(0x21, 0x00, "Cat\r\n", 0, 0);
+			// interrupt(0x21, 0x00, "Cat\r\n", 0, 0);
 			cat(curdir);
 		} else if (compareStrN(input, "ls", 2)) {
-			interrupt(0x21, 0x00, "ls\r\n", 0, 0);
+			// interrupt(0x21, 0x00, "ls\r\n", 0, 0);
 			ls(curdir);
 		} else if (compareStrN(input, "rm", 2)) {
 			interrupt(0x21, 0x00, "rm is being run\r\n\0", 0, 0);
@@ -145,7 +128,7 @@ int main() {
 
 int cd(char* cmd, int idxDir) {
 	char directory[14];
-	int i, cnt, val, cont, initDir;
+	int i, cnt, val, cont, initDir, k;
 	cnt = 0;
 	cont = 1;
 	i=0;
@@ -166,10 +149,23 @@ int cd(char* cmd, int idxDir) {
 				// interrupt(0x21, 0, "\r\n\0", 0, 0);
 				cont = 0;
 			} else {
-				// interrupt(0x21, 0, "Folder ketemu bro A!\r\n",0,0);
+				interrupt(0x21, 0, "Masuk sini bro!\r\n",0,0);
 				// interrupt(0x21, 0, directory,0,0);
 				// interrupt(0x21, 0, "\r\n\0", 0, 0);
 				initDir = val;
+				curDirName[itrDirName++] = '/';
+				k = 0;
+				while (k < 14 ) {
+					if (directoryBuffer[initDir * 16 + 2 + k] == '\0') {
+						// interrupt(0x21, 0x00, "bye loop\r\n", 0, 0);
+						break;
+					} else {
+						// interrupt(0x21, 0x00, "masukkin char\r\n", 0, 0);
+						curDirName[itrDirName + k] = directoryBuffer[k + initDir * 16 + 2];
+						k++;
+					}
+				}
+				itrDirName += k;
 			}
 			cnt = 0;
 		}
@@ -189,6 +185,25 @@ int cd(char* cmd, int idxDir) {
 			// interrupt(0x21, 0, "Folder ketemu bro A!\r\n",0,0);
 			// interrupt(0x21, 0, directory,0,0);
 			// interrupt(0x21, 0, "\r\n\0", 0, 0);
+			interrupt(0x21, 0, "Masuk sini bro2!\r\n",0,0);
+				// interrupt(0x21, 0, directory,0,0);
+				// interrupt(0x21, 0, "\r\n\0", 0, 0);
+			if (dirBack ==0) {
+				initDir = val;
+				curDirName[itrDirName++] = '/';
+				k = 0;
+				while (k < 14 ) {
+					if (directoryBuffer[initDir * 16 + 2 + k] == '\0') {
+						// interrupt(0x21, 0x00, "bye loop\r\n", 0, 0);
+						break;
+					} else {
+						// interrupt(0x21, 0x00, "masukkin char\r\n", 0, 0);
+						curDirName[itrDirName + k] = directoryBuffer[k + initDir * 16 + 2];
+						k++;
+					}
+				}
+				itrDirName += k;
+			}
 			initDir = val;
 			dirChange = 1;
 		}
