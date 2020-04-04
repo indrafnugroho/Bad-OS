@@ -1,12 +1,12 @@
 # Ignore vscode config
-.vscode
-.vs
+*.vscode
+*.vs
 
 # Ignore .img 
-.img
+*.img
 
-.o
-.exe
+*.o
+*.exe
 
 bochsout.txt
 
