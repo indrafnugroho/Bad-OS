@@ -139,6 +139,23 @@ int main() {
 			}
 
 			curdir = cd(arg, curdir);
+		} else if(compareStrN(input,"mv", 2)) {
+			i = 3;
+			while (i < 17 ) {
+				if (input[i] == '\0') {
+					break;
+				} else {
+					arg[i - 3] = input[i];
+				}
+				i++;
+			}
+
+			while (i < 17) {
+				arg[i-3] = '\0';
+				i++;
+			}
+
+			curdir = mv(arg, curdir);
 		} else {
 			interrupt(0x21, 0x00, "Invalid Command!\r\n", 0, 0);
 			executeBin(input);
