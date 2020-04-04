@@ -71,7 +71,7 @@ int main() {
 				dirAndName[i + 1] = arg[i];
 			}
 
-			interrupt(0x21, 0x03, dirAndName, 0x1F, 0);
+			interrupt(0x21, 0x03, dirAndName, 512, 0);
 			interrupt(0x21, 0x06, "cat", 0x2000, &isSuccess);
 		} else if (compareStrN(input, "ls", 2)) {
 			// interrupt(0x21, 0x00, "ls\r\n", 0, 0);
@@ -94,7 +94,7 @@ int main() {
 				dirAndName[i + 1] = arg[i];
 			}
 
-			interrupt(0x21, 0x03, dirAndName, 0x1F, 0);
+			interrupt(0x21, 0x03, dirAndName, 512, 0);
 			interrupt(0x21, 0x06, "rm", 0x2000, &isSuccess);
 		} else if (compareStrN(input, "./", 2)) {
 			// interrupt(0x21, 0x00, "masuk if exec\r\n", 0, 0);
@@ -137,7 +137,7 @@ int main() {
 				dirAndName[i + 1] = arg[i];
 			}
 
-			interrupt(0x21, 0x03, dirAndName, 0x1F, 0);
+			interrupt(0x21, 0x03, dirAndName, 512, 0);
 			interrupt(0x21, 0x06, "mkdir", 0x2000, &isSuccess);
 		} else if(compareStrN(input,"cd", 2)) {
 			i = 3;

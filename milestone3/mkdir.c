@@ -5,7 +5,7 @@ void main () {
 	int i, found, emp, isSuccess;
 	
     // get parentIdx and filename
-	interrupt(0x21, 0x02, tempBuff, 0x1F, 0);
+	interrupt(0x21, 0x02, tempBuff, 512, 0);
     currDir = tempBuff[0];
     for (i = 0; i < 14; i++) {
 		directory[i] = tempBuff[i + 1];
