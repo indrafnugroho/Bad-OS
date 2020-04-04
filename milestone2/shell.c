@@ -4,6 +4,8 @@ void cat(char* folderFileName);
 void mkdir(char* arg);
 int cd(char* cmd, int idxDir);
 void rm(char* folderFileName);
+void delFile(char entry);
+void delDir(char entry);
 unsigned char compareStr(char* strA, char* strB);
 int compareStrN(char* strA, char* strB, int n);
 int searchPath(char* dirCall, int parentIndex);
@@ -13,13 +15,14 @@ void getCommand(char* input);
 void executeBin(char* cmd);
 void mv(char* cmd, int* idxDir);
 
-int curdir, dirBack, dirChange;
+int curdir, dirBack, dirChange, itrDirName;
+char curDirName[128], directoryBuffer[1024];
 curdir = 0xFF;
 
 int main() {
-	char arg[14], directoryBuffer[1024], curDirName[128];
+	char arg[14];
 	char* input;
-	int suc, i, itrDirName;
+	int suc, i;
 	curdir = 0xFF;
 	itrDirName = 0;
 	dirChange = 0;
@@ -34,34 +37,16 @@ int main() {
 
 	while (1) {
 		do {
+			interrupt(0x21, 0x2, directoryBuffer, 0x101, 0);
+			interrupt(0x21, 0x2, directoryBuffer + 512, 0x102, 0);
 			interrupt(0x21, 0x00, "Root", 0, 0);
-			if (dirChange) {
-				if (dirBack == 0) {
-					interrupt(0x21, 0x2, directoryBuffer, 0x101, 0);
-					interrupt(0x21, 0x2, directoryBuffer + 512, 0x102, 0);
-					// interrupt(0x21, 0x00, "abis readdir\r\n", 0, 0);
-
-					curDirName[itrDirName++] = '/';
-					i = 0;
-					while (i < 14 ) {
-						if (directoryBuffer[curdir * 16 + 2 + i] == '\0') {
-							// interrupt(0x21, 0x00, "bye loop\r\n", 0, 0);
-							break;
-						} else {
-							// interrupt(0x21, 0x00, "masukkin char\r\n", 0, 0);
-							curDirName[itrDirName + i] = directoryBuffer[i + curdir * 16 + 2];
-							i++;
-						}
-					}
-					itrDirName += i;
-					dirChange = 0;
-				} else {
-					while (!(curDirName[itrDirName] == '/')) {
-						curDirName[itrDirName--] = '\0';
-					}
-					curDirName[itrDirName] = '\0';
-					dirBack = 0;
+			if (!(dirBack == 0)) {
+				while (!(curDirName[itrDirName] == '/')) {
+					curDirName[itrDirName--] = '\0';
 				}
+				curDirName[itrDirName] = '\0';
+				dirBack = 0;
+				
 			}
 			interrupt(0x21, 0x00, curDirName, 0, 0);
 			interrupt(0x21, 0x00, ">", 0, 0);
@@ -84,7 +69,7 @@ int main() {
 
 			cat(arg);
 		} else if (compareStrN(input, "ls", 2)) {
-			interrupt(0x21, 0x00, "ls\r\n", 0, 0);
+			// interrupt(0x21, 0x00, "ls\r\n", 0, 0);
 			ls(curdir);
 		} else if (compareStrN(input, "rm", 2)) {
 			i = 3;
@@ -278,7 +263,7 @@ void executeBin(char* cmd) {
 
 int cd(char* cmd, int idxDir) {
 	char directory[14];
-	int i, cnt, val, cont, initDir;
+	int i, cnt, val, cont, initDir, k;
 	cnt = 0;
 	cont = 1;
 	i=0;
@@ -299,10 +284,23 @@ int cd(char* cmd, int idxDir) {
 				// interrupt(0x21, 0, "\r\n\0", 0, 0);
 				cont = 0;
 			} else {
-				// interrupt(0x21, 0, "Folder ketemu bro A!\r\n",0,0);
+				interrupt(0x21, 0, "Masuk sini bro!\r\n",0,0);
 				// interrupt(0x21, 0, directory,0,0);
 				// interrupt(0x21, 0, "\r\n\0", 0, 0);
 				initDir = val;
+				curDirName[itrDirName++] = '/';
+				k = 0;
+				while (k < 14 ) {
+					if (directoryBuffer[initDir * 16 + 2 + k] == '\0') {
+						// interrupt(0x21, 0x00, "bye loop\r\n", 0, 0);
+						break;
+					} else {
+						// interrupt(0x21, 0x00, "masukkin char\r\n", 0, 0);
+						curDirName[itrDirName + k] = directoryBuffer[k + initDir * 16 + 2];
+						k++;
+					}
+				}
+				itrDirName += k;
 			}
 			cnt = 0;
 		}
@@ -322,6 +320,25 @@ int cd(char* cmd, int idxDir) {
 			// interrupt(0x21, 0, "Folder ketemu bro A!\r\n",0,0);
 			// interrupt(0x21, 0, directory,0,0);
 			// interrupt(0x21, 0, "\r\n\0", 0, 0);
+			interrupt(0x21, 0, "Masuk sini bro2!\r\n",0,0);
+				// interrupt(0x21, 0, directory,0,0);
+				// interrupt(0x21, 0, "\r\n\0", 0, 0);
+			if (dirBack ==0) {
+				initDir = val;
+				curDirName[itrDirName++] = '/';
+				k = 0;
+				while (k < 14 ) {
+					if (directoryBuffer[initDir * 16 + 2 + k] == '\0') {
+						// interrupt(0x21, 0x00, "bye loop\r\n", 0, 0);
+						break;
+					} else {
+						// interrupt(0x21, 0x00, "masukkin char\r\n", 0, 0);
+						curDirName[itrDirName + k] = directoryBuffer[k + initDir * 16 + 2];
+						k++;
+					}
+				}
+				itrDirName += k;
+			}
 			initDir = val;
 			dirChange = 1;
 		}
@@ -539,8 +556,8 @@ void cat(char* folderFileName) {
 }
 
 void rm(char* folderFileName) {
-	char name[14], mapBuffer[512], folderAndFiles[512*2], sectBuffer[512];
-	int i, j, k, isFound, isNameMatch, idxName, folderFilesEntry;
+	char name[14], folderAndFiles[512*2];
+	int i, j, isFound, isNameMatch, idxName, folderFilesEntry;
 	isFound = 0;
 
 	for (i = 0; i < 14; i++) {
@@ -575,8 +592,6 @@ void rm(char* folderFileName) {
                     	folderFilesEntry = folderAndFiles[i + 1];
 						break;
                 	}
-            	// } else {
-				// 	//haven't got any clue yet on how to handle deleting dir
 				}
         	}
 		}
@@ -586,34 +601,72 @@ void rm(char* folderFileName) {
 		interrupt(0x21, 0, "File/folder not found\r\n\0", 0, 0);
 	}
 	else {
-		//delete file/folder entry
-		folderAndFiles[folderFilesEntry * 16] = 0x0;
-		folderAndFiles[folderFilesEntry * 16 + 1] = '\0';
-		
-		//for files only
-		if (folderFilesEntry != 0xFF) {
-			//deletion in map and sector
-			interrupt(0x21, 0x02, &mapBuffer, 256, 0);
-			interrupt(0x21, 0x02, &sectBuffer, 259, 0);
-			k = 0;
-			while (sectBuffer[folderFilesEntry * 16 + k] != '\0' && k < 16) {
-				//make it empty
-				mapBuffer[sectBuffer[folderFilesEntry * 16 + k]] = 0x0;
-				sectBuffer[folderFilesEntry * 16 + k] = 0x0;
-				k++;
-			}
-			interrupt(0x21, 0x03, &sectBuffer, 259, 0);
-			interrupt(0x21, 0x03, &mapBuffer, 256, 0);
-		}
-
-		//rewrite buffer to sectors
-		interrupt(0x21, 0x03, &folderAndFiles, 257, 0);
-		interrupt(0x21, 0x03, folderAndFiles + 512, 258, 0);
 		if (folderFilesEntry == 0xFF) {
+			delDir(folderFilesEntry);
 			interrupt(0x21, 0, "Folder deleted successfully!\r\n\0", 0, 0);
 		} else {
+			delFile(folderFilesEntry);
 			interrupt(0x21, 0, "File deleted successfully!\r\n\0", 0, 0);
 		}
+	}
+}
+
+void delFile(char entry) {
+	char mapBuffer[512], folderAndFiles[1024], sectBuffer[512];
+	int i;
+	
+	//read sector 257 and 258
+	interrupt(0x21, 0x02, folderAndFiles, 257, 0);
+	interrupt(0x21, 0x02, folderAndFiles + 512, 258, 0);
+	
+	//delete file entry
+	folderAndFiles[entry * 16] = 0x0;
+	folderAndFiles[entry * 16 + 1] = '\0';
+		
+	//deletion in map and sector
+	interrupt(0x21, 0x02, &mapBuffer, 256, 0);
+	interrupt(0x21, 0x02, &sectBuffer, 259, 0);
+	i = 0;
+	while (sectBuffer[entry * 16 + i] != '\0' && i < 16) {
+		//make it empty
+		mapBuffer[sectBuffer[entry * 16 + i]] = 0x0;
+		sectBuffer[entry * 16 + i] = 0x0;
+		i++;
+	}
+	//rewrite buffer to sectors
+	interrupt(0x21, 0x03, &folderAndFiles, 257, 0);
+	interrupt(0x21, 0x03, folderAndFiles + 512, 258, 0);
+	interrupt(0x21, 0x03, &sectBuffer, 259, 0);
+	interrupt(0x21, 0x03, &mapBuffer, 256, 0);
+}
+
+void delDir(char entry) {
+	char folderAndFiles[1024];
+	int i;
+
+	interrupt(0x21, 0x02, folderAndFiles, 257, 0);
+	interrupt(0x21, 0x02, folderAndFiles + 512, 258, 0);
+
+	//delete folder entry
+	folderAndFiles[entry * 16] = 0x0;
+	folderAndFiles[entry * 16 + 1] = '\0';
+
+	//rewrite buffer to sector
+	interrupt(0x21, 0x03, &folderAndFiles, 257, 0);
+	interrupt(0x21, 0x03, folderAndFiles + 512, 258, 0);
+
+	for (i = 0; i < 64; i++) {
+		if (folderAndFiles[i * 16] != 0xFF) {
+			if (folderAndFiles[i * 16] == entry && folderAndFiles[i * 16 + 1] != '\0') {
+	 			delFile(i);
+	 		}
+		}
+	}
+
+	for (i = 0; i < 64; i++) {
+		if (folderAndFiles[i * 16] == entry && folderAndFiles[i * 16 + 1] == 0xFF) {
+			delDir(i);
+	 	}
 	}
 }
 
