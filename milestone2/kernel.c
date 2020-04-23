@@ -1,5 +1,3 @@
-#include "math.h"
-
 /* Ini deklarasi fungsi */
 void handleInterrupt21 (int AX, int BX, int CX, int DX);
 void printString(char *string); //done
@@ -12,9 +10,9 @@ void readFile(char *buffer, char *path, int *result, char parentIndex);
 void executeProgram(char *filename, int segment, int *success);
 void printLogo();
 
-// //Fungsi Matematika
-// int mod(int x, int y); //done
-// int div(int a,int b); //done
+//Fungsi Matematika
+int mod(int x, int y); //done
+int div(int a,int b); //done
 
 //Main Function
 int main() {
@@ -333,16 +331,16 @@ void printLogo () {
 	printString("WELCOME TO BAD OS\r\n");
 }
 
-//Implementasi Fungsi Matematika 
-// int mod(int x, int y) { 
-//     while (x>=y) {
-//         x-=y;
-//     }return x;
-// }
+// Implementasi Fungsi Matematika 
+int mod(int x, int y) { 
+    while (x>=y) {
+        x-=y;
+    }return x;
+}
 
-// int div (int x, int y) {
-// 	int ratio = 0;
-// 	while(ratio*y <= x) {
-// 		ratio += 1;
-// 	}return(ratio-1);
-// }
+int div (int x, int y) {
+	int ratio = 0;
+	while(ratio*y <= x) {
+		ratio += 1;
+	}return(ratio-1);
+}

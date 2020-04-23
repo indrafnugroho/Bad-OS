@@ -37,11 +37,21 @@ ld86 -o rm -d rm.o lib_asm.o textmodule.o fileIOmodule.o folderIOmodule.o mathmo
 
 # compile mkdir
 bcc -ansi -c mkdir.c -o mkdir.o
-ld86 -o mkdir -d mkdir.o lib_asm.o textmodule.o folderIOmodule.o
+ld86 -o mkdir -d mkdir.o lib_asm.o
 ./loadFile mkdir
+
+# compile mv
+# bcc -ansi -c mv.c -o mv.o
+# ld86 -o mv -d mv.o lib_asm.o
+# ./loadFile mv
 
 ./loadFile tes.txt 
 ./loadFile abcd.txt
+
+# cleaning compiled files
+rm bochsout.txt bootloader cat cat.o fileIOmodule.o folderIOmodule.o kernel kernel.o kernel_asm.o
+rm lib_asm.o loadFile mathmodule.o mkdir mkdir.o rm rm.o shell shell.o textmodule.o
+# rm mv mv.o
 
 # run bochs
 echo c | bochs -f if2230.config

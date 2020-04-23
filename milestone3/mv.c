@@ -1,17 +1,21 @@
-#include "textmodule.h"
-#include "fileIOmodule.h"
-#include "folderIOmodule.h"
-
-void mv(char* cmd, int* idxDir) {
-	char directory[14];   
+void main() {
+	char* cmd[14];
+	int* idxDir;
+	char directory[14], tempBuff[512], files[1024], dirDipindah[14];
 	int count, val, nomorPindah, lanjot, var, initDir, dirTujuan,i;
-	char files[1024];
-	int panjang = 512;
-	char dirDipindah[14];
+	int panjang = 512, isSuccess;
 	var = 0;
 	count = 0;
 	lanjot = 1;
-	dirTujuan = *(idxDir);s
+
+	// get parentIdx and filename
+	interrupt(0x21, 0x02, tempBuff, 512, 0);
+    idxDir = tempBuff[0];
+    for (i = 0; i < 14; i++) {
+		cmd[i] = tempBuff[i + 1];
+	}
+
+	dirTujuan = *(idxDir);
 	initDir = *(idxDir);
 	
 	for (i =0; i < 14; ++i) {
@@ -81,4 +85,6 @@ void mv(char* cmd, int* idxDir) {
 		directory[i] = '\0';
 		dirDipindah[i] = '\0';
 	}
+	interrupt(0x21, 0x06, "shell", 0x2000, &isSuccess);
 }
+

@@ -1,24 +1,8 @@
 void handleInterrupt21 (int AX, int BX, int CX, int DX);
 
-// text module
-
-#include "textmodule.h"
-
 // system module
 void clear(char *buffer, int length); //Fungsi untuk mengisi buffer dengan 0
 void executeProgram(char *filename, int segment, int *success);
-
-// fileIO module
-
-#include "fileIOmodule.h"
-
-// folderIO module
-
-#include "folderIOmodule.h"
-
-// math module
-
-#include "mathmodule.h"
 
 //Main Function
 int main() {
@@ -63,8 +47,6 @@ void handleInterrupt21 (int AX, int BX, int CX, int DX) {
 }
 
 // system module
-
-
 void clear(char *buffer, int length) {
 	int i;
 	for(i = 0; i < length; ++i){

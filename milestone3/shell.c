@@ -1,13 +1,11 @@
+void ls(char parentIndex);
 void execProg(char* progName, char parentIndex);
 int cd(char* cmd, int idxDir);
 unsigned char compareStr(char* strA, char* strB);
 int compareStrN(char* strA, char* strB, int n);
 int searchPath(char* dirCall, int parentIndex);
-char searchForPath(char* path, char parentIndex);
-char* searchName(char parentIndex);
 void getCommand(char* input);
 void executeBin(char* cmd);
-void mv(char* cmd, int* idxDir);
 
 int curdir, dirBack, dirChange, itrDirName;
 char curDirName[128], directoryBuffer[1024];
@@ -171,7 +169,13 @@ int main() {
 				i++;
 			}
 
-			mv(arg, curdir); 
+			dirAndName[0] = curdir;
+			for (i = 0; i < 14; i++) {
+				dirAndName[i + 1] = arg[i];
+			}
+
+			interrupt(0x21, 0x03, dirAndName, 512, 0);
+			interrupt(0x21, 0x06, "mv", 0x2000, &isSuccess);
 		} else {
 			interrupt(0x21, 0x00, "Invalid Command!\r\n", 0, 0);
 			executeBin(input);
@@ -179,87 +183,6 @@ int main() {
 	}
 
 	return 0;
-}
-
-void mv(char* cmd, int* idxDir) {
-	char directory[14];
-	char dirDipindah[14];
-	char files[1024];
-	int count, val, nomorPindah, lanjot, var, initDir, dirTujuan,i;
-	int panjang = 512;
-	count = 0;
-	lanjot = 1;
-	var = 0;
-	initDir = *(idxDir);
-	dirTujuan = *(idxDir);
-	
-	for (i =0; i < 14; ++i) {
-		directory[i] = '\0';
-		dirDipindah[i] = '0';
-	}
-	for (i = 0; i < 1024; i++) {
-		files[i] = '\0';
-	}
-	i = 0;
-	while (i < 128 && (cmd[i] != 0 && lanjot == 1)) {
-		if(var == 0) {
-			if(cmd[i] == 32 && cmd[i] == 0) {
-				dirDipindah[count] = cmd[i];
-				++count;
-			} else if (cmd[i] == 64) {
-				nomorPindah = searchPath(dirDipindah, *idxDir);
-				if(nomorPindah == 64) {
-					interrupt(0x21, 0, "Gaiso mindah iki bro! : \0",0,0);
-					interrupt(0x21, 0, dirDipindah, 0, 0);
-					interrupt(0x21, 0, "\r\n\0", 0, 0);
-					lanjot = 0;
-				} else {
-					count = 0;
-					var = 1;
-				}
-			}
-			if(cmd[i+1] == 32 || cmd[i+2] == 32){
-				interrupt(0x21, 0, "Out of bounds!\r\n\0",0,0);
-				lanjot = 0;
-			}
-		}
-		else if(var == 1) {
-			//cd di tempat tujuan
-			if(cmd[i] == '/') {
-				//isi array
-				directory[count] = cmd[i];
-				++count;
-			} else if(cmd[i] == 32 || cmd[i] == '/') {
-				nomorPindah = searchPath(directory, dirTujuan);
-				if(nomorPindah == 32) {
-					interrupt(0x21, 0, "Gaada cok! : \0",0,0);
-					interrupt(0x21, 0, directory, 0,0);
-					interrupt(0x21, 0, "\r\n\0", 0, 0);
-					lanjot = 0;
-				} else {
-					interrupt(0x21, 0, "Ada cok! : \0",0,0);
-					interrupt(0x21, 0, directory, 0,0);
-					interrupt(0x21, 0, "\r\n\0", 0, 0);
-					dirTujuan = nomorPindah;
-				}
-				count = 0;
-			}
-		}
-		++i;
-	}
-	//sekarang baru mau mindahin :)
-	if(lanjot) {
-		interrupt(0x21, 2, directory, 0x101,0);
-		interrupt(0x21, 3, directory + panjang, 0,0);
-		directory[nomorPindah*16] = dirTujuan;
-		interrupt(0x21, 2, directory + panjang, 0,0);
-		interrupt(0x21, 3, directory, 0x101,0);
-		interrupt(0x21, 0, "Done!", 0,0);
-	}
-	for (i =0; i < 14; ++i) {
-		directory[i] = '\0';
-		dirDipindah[i] = '\0';
-	}
 }
 
 void executeBin(char* cmd) {
@@ -558,120 +481,4 @@ int compareStrN(char* strA, char* strB, int n) {
 		++i;
 	}
 	return 1;
-}
-
-char searchForPath(char* path, char parentIndex) {
-	char files[1024];
-	char tempBuffer[512];
-	char tempBuffer2[512];
-	int isFound = 0;
-	int isNameMatch, k, s, j, idxName;
-	int h, l;
-
-	interrupt(0x21, 0x00, "Mencari folder: ", 0, 0);
-	interrupt(0x21, 0x00, path, 0, 0);
-	interrupt(0x21, 0x00, "\r\n", 0, 0);
-	interrupt(0x21, 0x2, files, 0x101, 0);
-	interrupt(0x21, 0x2, files + 512, 0x102, 0);
-	
-	k = 0;
-
-	while (isFound == 0 && k < 64) {
-		if (files[k * 16] == parentIndex) {
-			interrupt(0x21, 0x00, "parentnya ketemu bro\r\n", 0, 0);
-			idxName = k * 16 + 2;
-			if (files[idxName] != 0x0) {
-				// Ini buat baca folder
-				interrupt(0x21, 0x00, "ini folder bro\r\n", 0, 0);
-				isNameMatch = 1;
-				h = 0;
-				while (h < 14 && path[h] != '\0') {
-					interrupt(0x21, 0x00, path[h], 0, 0);
-					interrupt(0x21, 0x00, "\r\n", 0, 0);
-					interrupt(0x21, 0x00, files[idxName + h], 0, 0);
-					interrupt(0x21, 0x00, "\r\n", 0, 0);
-					if (path[h] != files[idxName + h]) {
-						interrupt(0x21, 0x00, "salah nama \r\n", 0, 0);
-						isNameMatch = 0;
-						break;
-					}
-					h++;
-				}
-				if (isNameMatch) {
-					interrupt(0x21, 0x00, "yes folder ketemu bro\r\n", 0, 0);
-					isFound = 1;
-					break;
-				} 
-			} else {
-				interrupt(0x21, 0x00, "ganemu folder bro\r\n", 0, 0);
-			}
-		}
-
-		k += 16;
-	}
-
-	if (isFound) {
-		parentIndex = k;
-	} else {
-		interrupt(0x21, 0x00, "yah gaketemu bro\r\n", 0, 0);
-		parentIndex = 0x00;
-	}
-
-	return parentIndex;
-
-	// while(!isFound) {
-	// 	//search for parent idx with matching path name
-	// 	for (k; k < 1024; k+=16) {
-	// 		if (files[k] == parentIndex) {
-	// 			interrupt(0x21, 0x00, "parentnya ketemu bro\r\n", 0, 0);
-	// 			idxName = k+2;
-	// 			if (files[idxName] != 0x0 && files[k+1] != 0xFF) {
-	// 				//matching name
-	// 				isNameMatch = 1;
-	// 				for (h=0; h < 14; h++) {
-	// 					if (path[h] != files[idxName + h]) {
-	// 						isNameMatch = 0;
-	// 						break;
-	// 					}
-	// 				} 
-					
-	// 				if (isNameMatch) {
-	// 					isFound = 1;
-	// 					s = files[k+1]; //in hexa gengs
-	// 					break;
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// 	if (k==1024) {
-	// 		interrupt(0x21, 0x00, "k sudah 1024 bro\r\n", 0, 0);
-
-	// 		break; // break while terluar
-	// 	}
-	// }
-
-	if (!isFound) {
-		parentIndex = 0x00;
-	}
-
-	interrupt(0x21, 0x00, "bro	 bro\r\n", 0, 0);
-
-	return parentIndex;
-}
-
-char* searchName(char parentIndex) {
-	char files[1024];
-	char name[14];
-	
-	int isFound = 0;
-	int isNameMatch, k, s, j, idxName;
-	int h, l;
-
-	interrupt(0x21, 0x2, files, 0x101, 0);
-	idxName = parentIndex + 2;
-	while (files[idxName] != '\0') {
-		name[idxName - 2] = files[idxName];
-	}
-
-	return name;
 }
