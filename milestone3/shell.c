@@ -12,7 +12,7 @@ char curDirName[128], directoryBuffer[1024];
 curdir = 0xFF;
 
 int main() {
-	char arg[14], dirAndName[512];
+	char arg[14], dirAndName[512], destDir[14];
 	char* input;
 	int isSuccess, i;
 	curdir = 0xFF;
@@ -155,23 +155,10 @@ int main() {
 			curdir = cd(arg, curdir);
 		} else if(compareStrN(input,"mv", 2)) {
 			i = 3;
-			while (i < 17 ) {
-				if (input[i] == '\0') {
-					break;
-				} else {
-					arg[i - 3] = input[i];
-				}
-				i++;
-			}
-
-			while (i < 17) {
-				arg[i-3] = '\0';
-				i++;
-			}
-
 			dirAndName[0] = curdir;
-			for (i = 0; i < 14; i++) {
-				dirAndName[i + 1] = arg[i];
+			while (input[i] != '\0') {
+				dirAndName[i - 2] = input[i];
+				i++;
 			}
 
 			interrupt(0x21, 0x03, dirAndName, 512, 0);

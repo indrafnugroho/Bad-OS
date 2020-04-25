@@ -14,6 +14,19 @@ void main() {
     for (i = 0; i < 14; i++) {
 		cmd[i] = tempBuff[i + 1];
 	}
+	// while (input[i] != '\0') {
+	// 	if (input[i] == 0x20) {
+	// 		i++;
+	// 		j = i;
+	// 		spaceFound = 1;
+	// 	} else if (spaceFound) {
+	// 		destDir[i - j] = input[i];
+	// 		i++;
+	// 	} else if (!spaceFound) {
+	// 		arg[i - 3] = input[i];
+	// 		i++;
+	// 	}
+	// }
 
 	dirTujuan = *(idxDir);
 	initDir = *(idxDir);
